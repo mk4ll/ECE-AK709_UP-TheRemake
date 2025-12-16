@@ -54,14 +54,12 @@ GLFWwindow* window;
 Camera* camera;
 Light* light;
 GLuint shaderProgram, depthProgram, miniMapProgram;
-Drawable* model1;
-Drawable* model2;
 Drawable* plane;
-GLuint modelDiffuseTexture, modelSpecularTexture;
 GLuint depthFBO, depthTexture;
 Drawable* quad;
 //
 Drawable* house;
+GLuint houseDiffuseTexture, houseSpecularTexture;
 //
 
 // locations for shaderProgram
@@ -181,18 +179,9 @@ void createContext() {
 
 
 	// Loading a model
-
-
-	// 1. Using Drawable to load suzanne
-	model1 = new Drawable("suzanne.obj");
 	// loading a diffuse and a specular texture
-	modelDiffuseTexture = loadSOIL("suzanne_diffuse.bmp");
-	modelSpecularTexture = loadSOIL("suzanne_specular.bmp");
-
-
-	// Task 1.2 Load earth.obj using drawable 
-	model2 = new Drawable("earth.obj");
-
+	houseDiffuseTexture = loadSOIL("house_diffuse.bmp");
+	houseSpecularTexture = loadSOIL("house_specular.bmp");
 
 	// Task 1.3
 	// Creating a Drawable object using vertices, uvs, normals
@@ -337,10 +326,6 @@ void free() {
 
 void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
-	// Task 3.3
-	//*/
-
-
 	// Setting viewport to shadow map size
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 
@@ -368,7 +353,7 @@ void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	plane->draw();
 
 	// house
-	modelMatrix = translate(mat4(), vec3(-3.0f, 1.0f, -3.0f)) * scale(mat4(), vec3(0.01f));
+	modelMatrix = mat4(1.0f);
 	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &modelMatrix[0][0]);
 	house->bind();
 	house->draw();
@@ -420,36 +405,17 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	// Setting up texture to display on shader program          //  --- Texture Pipeline ---
 	glActiveTexture(GL_TEXTURE0);								// Activate texture position
-	glBindTexture(GL_TEXTURE_2D, modelDiffuseTexture);			// Assign texture to position 
+	glBindTexture(GL_TEXTURE_2D, houseDiffuseTexture);			// Assign texture to position 
 	glUniform1i(diffuseColorSampler, 0);						// Assign sampler to that position
-
+	/*
 	glActiveTexture(GL_TEXTURE1);								//
-	glBindTexture(GL_TEXTURE_2D, modelSpecularTexture);			// Same process for specular texture
+	glBindTexture(GL_TEXTURE_2D, houseSpecularTexture);			// Same process for specular texture
 	glUniform1i(specularColorSampler, 1);						//
-
+	*/
 	// Inside the fragment shader, there is an if statement whether to use  
 	// the material of an object or sample a texture
 	glUniform1i(useTextureLocation, 1);
 
-
-	// Draw model1
-	model1->bind();
-	model1->draw();
-
-
-	// Remove the texture from model2 and use material instead
-	// ** Use bool variable to tell the shader not to use a texture
-	// ** Look at if statement in the fragment shader
-	uploadMaterial(polishedSilver);
-	glUniform1i(useTextureLocation, 0);
-
-	// Task 1.2 - Draw the sphere on the scene
-	// Use a scaling of 0.5 across all dimensions and translate it to (-3, 1, -3)
-	mat4 sphereModelMatrix = translate(mat4(), vec3(-3, 1, -3)) * scale(mat4(), vec3(0.5));
-	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &sphereModelMatrix[0][0]);
-
-	model2->bind();
-	model2->draw();
 
 	// Task 1.4 Use different material for the plane
 	// NOTE: when we make a variable uniform to the shader program the value of 
@@ -464,18 +430,29 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	// Task 1.3 Draw a plane under suzanne
 	// Create an identity model matrix
 	mat4 planeModelMatrix = mat4();
-	mat4 houseModelMatrix = translate(mat4(), vec3(-3.0f, 1.0f, -3.0f)) * scale(mat4(), vec3(0.01f));
 
 	// upload the model matrix
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &planeModelMatrix[0][0]);
-
 	plane->bind();
 	plane->draw();
+	
+	// house
+	mat4 houseModelMatrix = mat4(1.0f);
+	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &houseModelMatrix[0][0]);
+	// Activate and bind diffuse texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, houseDiffuseTexture);
+	glUniform1i(diffuseColorSampler, 0);
+	// Activate and bind specular texture
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, houseSpecularTexture);
+	glUniform1i(specularColorSampler, 1);
 
-	// house :
-	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &houseModelMatrix[0][0]);
+	glUniform1i(useTextureLocation, 1);
+
 	house->bind();
 	house->draw();
+
 }
 
 // Task 2.3: visualize the depth_map on a sub-window at the top of the screen
