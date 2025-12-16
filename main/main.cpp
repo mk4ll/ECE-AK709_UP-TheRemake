@@ -32,7 +32,7 @@ void free();
 
 #define W_WIDTH 1024
 #define W_HEIGHT 768
-#define TITLE "Lab 06"
+#define TITLE "UP - The Remake"
 
 #define SHADOW_WIDTH 1024
 #define SHADOW_HEIGHT 1024
@@ -59,8 +59,10 @@ Drawable* model2;
 Drawable* plane;
 GLuint modelDiffuseTexture, modelSpecularTexture;
 GLuint depthFBO, depthTexture;
-
 Drawable* quad;
+//
+Drawable* house;
+//
 
 // locations for shaderProgram
 GLuint viewMatrixLocation;
@@ -234,6 +236,9 @@ void createContext() {
 	plane = new Drawable(floorVertices, floorUVs, floorNormals);
 
 
+	// 
+	house = new Drawable("houseUP.obj");
+
 	// Task 2.2: Creating a 2D quad to visualize the depthmap
 	// create geometry and vao for screen-space quad
 	//*/
@@ -354,25 +359,19 @@ void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 
 	// ---- rendering the scene ---- //
-	// creating suzanne model matrix and sending to GPU
-	mat4 modelMatrix = translate(mat4(), vec3(0.0, 0.0, -5.0));
-	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &modelMatrix[0][0]);
+	// creating model matrix and sending to GPU
 
-	model1->bind();
-	model1->draw();
-
-	// same for sphere
-	modelMatrix = translate(mat4(), vec3(-3.0f, 1.0f, -3.0f)) * scale(mat4(), vec3(0.5f));
-	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &modelMatrix[0][0]);
-	model2->bind();
-	model2->draw();
-
-	// same for plane
-	modelMatrix = mat4(1.0f);
+	// plane
+	mat4 modelMatrix = mat4(1.0f);
 	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &modelMatrix[0][0]);
 	plane->bind();
 	plane->draw();
 
+	// house
+	modelMatrix = translate(mat4(), vec3(-3.0f, 1.0f, -3.0f)) * scale(mat4(), vec3(0.01f));
+	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &modelMatrix[0][0]);
+	house->bind();
+	house->draw();
 
 	// binding the default framebuffer again
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -438,7 +437,6 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	model1->draw();
 
 
-
 	// Remove the texture from model2 and use material instead
 	// ** Use bool variable to tell the shader not to use a texture
 	// ** Look at if statement in the fragment shader
@@ -466,12 +464,18 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	// Task 1.3 Draw a plane under suzanne
 	// Create an identity model matrix
 	mat4 planeModelMatrix = mat4();
+	mat4 houseModelMatrix = translate(mat4(), vec3(-3.0f, 1.0f, -3.0f)) * scale(mat4(), vec3(0.01f));
 
 	// upload the model matrix
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &planeModelMatrix[0][0]);
 
 	plane->bind();
 	plane->draw();
+
+	// house :
+	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &houseModelMatrix[0][0]);
+	house->bind();
+	house->draw();
 }
 
 // Task 2.3: visualize the depth_map on a sub-window at the top of the screen
