@@ -20,6 +20,7 @@
 #include <common/texture.h>
 #include <common/light.h> 
 
+#include <common/terrain.h>
 
 using namespace std;
 using namespace glm;
@@ -54,12 +55,13 @@ GLFWwindow* window;
 Camera* camera;
 Light* light;
 GLuint shaderProgram, depthProgram, miniMapProgram;
-Drawable* plane;
 GLuint depthFBO, depthTexture;
 Drawable* quad;
 //
+// task 1
 Drawable* house;
 GLuint houseDiffuseTexture, houseSpecularTexture;
+Drawable* mountainTerrain;
 //
 
 // locations for shaderProgram
@@ -175,58 +177,15 @@ void createContext() {
 	// --- miniMapProgram ---
 	quadTextureSamplerLocation = glGetUniformLocation(miniMapProgram, "textureSampler");
 
-
-
-
 	// Loading a model
 	// loading a diffuse and a specular texture
 	houseDiffuseTexture = loadSOIL("house_diffuse.bmp");
 	houseSpecularTexture = loadSOIL("house_specular.bmp");
 
-	// Task 1.3
-	// Creating a Drawable object using vertices, uvs, normals
-	// In this task we will create a plane on which the shadows will be displayed
-
-	// plane vertices
-	float y = -1; // offset to move the plane up/down across the y axis
-	vector<vec3> floorVertices = {
-		vec3(-20.0f, y, -20.0f),
-		vec3(-20.0f, y,  20.0f),
-		vec3(20.0f,  y,  20.0f),
-		vec3(20.0f,  y,  20.0f),
-		vec3(20.0f,  y, -20.0f),
-		vec3(-20.0f, y, -20.0f),
-
-	};
-
-	// plane normals
-	vector<vec3> floorNormals = {
-		vec3(0.0f, 1.0f, 0.0f),
-		vec3(0.0f, 1.0f, 0.0f),
-		vec3(0.0f, 1.0f, 0.0f),
-		vec3(0.0f, 1.0f, 0.0f),
-		vec3(0.0f, 1.0f, 0.0f),
-		vec3(0.0f, 1.0f, 0.0f)
-	};
-
-	// plane uvs
-	vector<vec2> floorUVs = {
-		vec2(0.0f, 0.0f),
-		vec2(0.0f, 1.0f),
-		vec2(1.0f, 1.0f),
-		vec2(1.0f, 1.0f),
-		vec2(1.0f, 0.0f),
-		vec2(0.0f, 0.0f),
-	};
-
-
-	// Call the Drawable constructor
-	// Notice, that this way we dont have to generate VAO and VBO for the matrices
-	plane = new Drawable(floorVertices, floorUVs, floorNormals);
-
-
-	// 
+	// house 
 	house = new Drawable("houseUP.obj");
+	// terrain
+	mountainTerrain = Terrain::generate(100.0f, 50, 15.0f);
 
 	// Task 2.2: Creating a 2D quad to visualize the depthmap
 	// create geometry and vao for screen-space quad
@@ -285,7 +244,7 @@ void createContext() {
 	// Set color to set out of border 
 	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-	// Next go to fragment shader and add an iff statement, so if the distance in the z-buffer is equal to 1, 
+	// Next go to fragment shader and add an if statement, so if the distance in the z-buffer is equal to 1, 
 	// meaning that the fragment is out of the texture border (or further than the far clip plane) 
 	// then the shadow value is 0.
 	//*/
@@ -346,14 +305,8 @@ void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	// ---- rendering the scene ---- //
 	// creating model matrix and sending to GPU
 
-	// plane
-	mat4 modelMatrix = mat4(1.0f);
-	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &modelMatrix[0][0]);
-	plane->bind();
-	plane->draw();
-
 	// house
-	modelMatrix = mat4(1.0f);
+	mat4 modelMatrix = mat4(1.0f);
 	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &modelMatrix[0][0]);
 	house->bind();
 	house->draw();
@@ -383,7 +336,7 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	// uploading the light parameters to the shader program
 	uploadLight(*light);
 
-	// Task 4.1 Display shadows on the plane
+	// Task 4.1 Display shadows on the terrain
 	// Sending the shadow texture to the shaderProgram
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, depthTexture);
@@ -407,34 +360,26 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	glActiveTexture(GL_TEXTURE0);								// Activate texture position
 	glBindTexture(GL_TEXTURE_2D, houseDiffuseTexture);			// Assign texture to position 
 	glUniform1i(diffuseColorSampler, 0);						// Assign sampler to that position
-	/*
+	
 	glActiveTexture(GL_TEXTURE1);								//
 	glBindTexture(GL_TEXTURE_2D, houseSpecularTexture);			// Same process for specular texture
 	glUniform1i(specularColorSampler, 1);						//
-	*/
+	
 	// Inside the fragment shader, there is an if statement whether to use  
 	// the material of an object or sample a texture
 	glUniform1i(useTextureLocation, 1);
 
 
-	// Task 1.4 Use different material for the plane
-	// NOTE: when we make a variable uniform to the shader program the value of 
-	//       that variable remains the same until we upload a new value. 
-	//       This means that the same model matrix and material defined for
-	//       model2 are used for the plane as well. 
-
 	// upload the material
 	uploadMaterial(turquoise);
 	glUniform1i(useTextureLocation, 0);
 
-	// Task 1.3 Draw a plane under suzanne
-	// Create an identity model matrix
-	mat4 planeModelMatrix = mat4();
+	//draw terrain under house
+	mat4 terrainModelMatrix = mat4(1.0f);
+	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &terrainModelMatrix[0][0]);
 
-	// upload the model matrix
-	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &planeModelMatrix[0][0]);
-	plane->bind();
-	plane->draw();
+	mountainTerrain->bind();
+	mountainTerrain->draw();
 	
 	// house
 	mat4 houseModelMatrix = mat4(1.0f);
