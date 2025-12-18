@@ -181,7 +181,6 @@ void createContext() {
 	house = new Drawable("houseUP.obj");
 	// terrain
 	mountainTerrain = Terrain::generate(100.0f, 50, 15.0f);
-
 	// Task 2.2: Creating a 2D quad to visualize the depthmap
 	// create geometry and vao for screen-space quad
 	//*/
@@ -532,15 +531,16 @@ void initialize() {
 	// Log
 	logGLParameters();
 
+	//initalize terrain
+	mountainTerrain = Terrain::generate(100.0f, 50, 15.0f);
 	// get terrain peak
 	vec3 peak = Terrain::get_terrain_peak();
 
 	// Create camera
 	camera = new Camera(window);
 
-	// update camera y-position to make the scene visible
-	camera->position.y = peak.y;
-
+	//initialize the camera position so that the scene is visible
+	camera->position = vec3(peak.x, peak.y + 5.0f, 20.0f);
 
 	// Task 1.1 Creating a light source
 	// Creating a custom light
@@ -549,7 +549,7 @@ void initialize() {
 		vec4{ 1, 1, 1, 1 },
 		vec4{ 1, 1, 1, 1 },
 		vec4{ 1, 1, 1, 1 },
-		vec3{ 0, peak.y + 20, 5 } // over the house and over the peak
+		vec3{10, peak.y + 20, 10} // over the house and over the peak
 	);
 
 }
