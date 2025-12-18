@@ -509,8 +509,8 @@ void initialize() {
 	glfwPollEvents();
 	glfwSetCursorPos(window, W_WIDTH / 2, W_HEIGHT / 2);
 
-	// Gray background color
-	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
+	// Sky blue background color
+	glClearColor(0.53f, 0.81f, 0.92f, 0.0f);
 
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
