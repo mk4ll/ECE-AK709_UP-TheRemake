@@ -7,16 +7,52 @@ using namespace std;
 // initialize the static var for the peak
 glm::vec3 Terrain::peakPos = glm::vec3(0.0f);
 
-float Terrain::getHeight(float x, float z, float size, float maxHeight) {
-    // central mountain using gaussian-like curve
-    float dist = sqrt(x * x + z * z);
-    float mountain = maxHeight * exp(-pow(dist / (size * 0.3f), 2.0f));
-
-    // simulate basic noise using sine
-    float detail = 1.5f * sin(x * 0.5f) * cos(z * 0.5f);
-
-    return mountain + detail;
+float plateau(float x, float center, float topWidth, float cliffWidth) {
+    float d = abs(x - center);
+    if (d < topWidth) return 1.0f;
+    float t = (d - topWidth) / cliffWidth;
+    t = clamp(t, 0.0f, 1.0f);
+    return 1.0f - t * t * (3.0f - 2.0f * t);
 }
+
+float Terrain::getHeight(float x, float z, float size, float maxHeight) {
+
+    float nx = x / size;
+    float nz = z / size;
+
+    // edge wobble
+    float edgeWobble = sin(nz * 6.0f) * 0.035f
+        + sin(nz * 13.0f) * 0.015f;
+    float wx = nx + edgeWobble;
+
+    float left = plateau(wx, -0.30f, 0.10f, 0.015f);
+    float right = plateau(wx, 0.30f, 0.14f, 0.015f);
+
+    float height =
+        left * maxHeight * 0.55f +
+        right * maxHeight * 1.15f;
+
+    // canyon
+    float meander = sin(nz * 16.0f) * 0.025f;
+    float sx = nx + meander;
+
+    height -= exp(-pow(sx / 0.04f, 2.0f)) * maxHeight;
+    height += exp(-pow(sx / 0.012f, 2.0f)) * maxHeight * 0.12f;
+
+    // masks
+    float topMask = glm::max(left, right);
+    float edgeMask = 1.0f - smoothstep(0.7f, 1.0f, topMask);
+
+    // rocky cliffs
+    float cliffNoise = 0.0f;
+    cliffNoise += sin(height * 5.0f + z * 0.4f) * 0.20f;
+    cliffNoise += sin(height * 17.0f + nx * 12.0f) * 0.08f;
+
+    float slopeMask = smoothstep(0.2f, 0.6f, edgeMask);
+
+    return height + cliffNoise * slopeMask;
+}
+
 
 glm::vec3 Terrain::get_terrain_peak() {
     return peakPos;
