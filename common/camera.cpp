@@ -102,6 +102,19 @@ void Camera::update() {
         position -= right * deltaTime * speed;
     }
 
+    //
+    // vertical camera movement
+    // move upwards (SPACE-BAR)
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        position += up * deltaTime * speed;
+    }
+    // move downwards (left CTRL)
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+        position -= up * deltaTime * speed;
+    }
+    
+    //
+
     // Task 5.6: handle zoom in/out effects
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
         if (radians(FoV) > 0.1 + radians(fovSpeed))
