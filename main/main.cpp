@@ -376,12 +376,17 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	mountainTerrain->draw();
 	
 	// house
-	mat4 houseModelMatrix = mat4(1.0f);
+	// get terrain peak
+	vec3 peak = Terrain::get_terrain_peak();
+	//place the house on top of the peak
+	mat4 houseModelMatrix = translate(mat4(1.0f), peak + vec3(0.0f, 0.0f, 0.0f));
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &houseModelMatrix[0][0]);
+
 	// Activate and bind diffuse texture
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, houseDiffuseTexture);
 	glUniform1i(diffuseColorSampler, 0);
+
 	// Activate and bind specular texture
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, houseSpecularTexture);
@@ -529,13 +534,17 @@ void initialize() {
 	// Create camera
 	camera = new Camera(window);
 
+	// get terrain peak
+	vec3 peak = Terrain::get_terrain_peak();
+
 	// Task 1.1 Creating a light source
-	// Creating a custom light 
+	// Creating a custom light
+
 	light = new Light(window,
 		vec4{ 1, 1, 1, 1 },
 		vec4{ 1, 1, 1, 1 },
 		vec4{ 1, 1, 1, 1 },
-		vec3{ 0, 5, 5 }
+		vec3{ 0, peak.y + 20, 5 } // over the house and over the peak
 	);
 
 }
