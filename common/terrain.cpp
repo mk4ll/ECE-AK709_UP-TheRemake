@@ -1,102 +1,60 @@
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 #include "terrain.h"
-#include <glad/glad.h>
+#include <cmath>
 
-// get vertices
-void Terrain::loadHeightmap(const char* path,
-    float heightScale,
-    float size)
-{
-    int channels;
-    unsigned char* data = stbi_load(path, &width, &height, &channels, 1);
+using namespace glm;
+using namespace std;
 
-    std::vector<float> vertices;
-    std::vector<unsigned int> indices;
+float Terrain::getHeight(float x, float z, float size, float maxHeight) {
+    // central mountain using gaussian-like curve
+    float dist = sqrt(x * x + z * z);
+    float mountain = maxHeight * exp(-pow(dist / (size * 0.3f), 2.0f));
 
-    for (int z = 0; z < height; z++) {
-        for (int x = 0; x < width; x++) {
-            int index = z * width + x;
-            float h = data[index] / 255.0f * heightScale;
+    // simulate basic noise using sine
+    float detail = 1.5f * sin(x * 0.5f) * cos(z * 0.5f);
 
-            float xpos = (float)x / (width - 1) * size;
-            float zpos = (float)z / (height - 1) * size;
-
-            // position
-            vertices.push_back(xpos);
-            vertices.push_back(h);
-            vertices.push_back(zpos);
-
-            // normal
-            vertices.push_back(0.0f);
-            vertices.push_back(1.0f);
-            vertices.push_back(0.0f);
-
-            // texture coords
-            vertices.push_back((float)x / width);
-            vertices.push_back((float)z / height);
-        }
-    }
-    // triangles
-    for (int z = 0; z < height - 1; z++) {
-        for (int x = 0; x < width - 1; x++) {
-            int i = z * width + x;
-
-            indices.push_back(i);
-            indices.push_back(i + width);
-            indices.push_back(i + 1);
-
-            indices.push_back(i + 1);
-            indices.push_back(i + width);
-            indices.push_back(i + width + 1);
-        }
-    }
-
-    // buffers
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER,
-        vertices.size() * sizeof(float),
-        vertices.data(),
-        GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-        indices.size() * sizeof(unsigned int),
-        indices.data(),
-        GL_STATIC_DRAW);
-
-    int stride = 8 * sizeof(float);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    glBindVertexArray(0);
-    stbi_image_free(data);
+    return mountain + detail;
 }
 
-//terrain constructor and draw
-Terrain::Terrain(const char* path, float heightScale, float size)
-{
-    loadHeightmap(path, heightScale, size);
-}
+Drawable* Terrain::generate(float size, int resolution, float maxHeight) {
+    vector<vec3> vertices;
+    vector<vec2> uvs;
+    vector<vec3> normals;
 
-void Terrain::Draw()
-{
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES,
-        (width - 1) * (height - 1) * 6,
-        GL_UNSIGNED_INT,
-        0);
+    float step = size / (float)resolution;
+    float offset = size / 2.0f;
+
+    for (int i = 0; i < resolution; ++i) {
+        for (int j = 0; j < resolution; ++j) {
+
+            // def 4 corners
+            float x1 = i * step - offset;
+            float z1 = j * step - offset;
+            float x2 = (i + 1) * step - offset;
+            float z2 = (j + 1) * step - offset;
+
+            // get heights
+            float h11 = getHeight(x1, z1, size, maxHeight);
+            float h12 = getHeight(x1, z2, size, maxHeight);
+            float h21 = getHeight(x2, z1, size, maxHeight);
+            float h22 = getHeight(x2, z2, size, maxHeight);
+
+            // triangles for the quad
+            vec3 v1{ x1, h11, z1 }, v2{ x1, h12, z2 }, v3{ x2, h21, z1 }, v4{ x2, h22, z2 };
+
+            // triangle 1
+            vertices.push_back(v1); vertices.push_back(v2); vertices.push_back(v3);
+            // triangle 2
+            vertices.push_back(v2); vertices.push_back(v4); vertices.push_back(v3);
+
+            // UV mapping
+            uvs.push_back(vec2(0, 0)); uvs.push_back(vec2(0, 1)); uvs.push_back(vec2(1, 0));
+            uvs.push_back(vec2(0, 1)); uvs.push_back(vec2(1, 1)); uvs.push_back(vec2(1, 0));
+
+            // normals
+            vec3 n1 = normalize(cross(v2 - v1, v3 - v1));
+            for (int k = 0; k < 6; k++) normals.push_back(n1);
+        }
+    }
+
+    return new Drawable(vertices, uvs, normals);
 }

@@ -172,10 +172,10 @@ CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO:STRING=/debug /INCREMENTAL
 
 //If set, runtime paths are not added when installing shared libraries,
 // but are added when building.
-CMAKE_SKIP_INSTALL_RPATH:BOOL=NO
+CMAKE_SKIP_INSTALL_RPATH:BOOL=OFF
 
 //If set, runtime paths are not added when using shared libraries.
-CMAKE_SKIP_RPATH:BOOL=NO
+CMAKE_SKIP_RPATH:BOOL=OFF
 
 //Flags used by the linker during the creation of static libraries
 // during all build types.
@@ -201,7 +201,7 @@ CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 // .SILENT directive, and all commands will be echoed to the console
 // during the make.  This is useful for debugging only. With Visual
 // Studio IDE projects all commands are done without /nologo.
-CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
+CMAKE_VERBOSE_MAKEFILE:BOOL=OFF
 
 //Path to the coverage program that CTest uses for performing coverage
 // inspection
@@ -218,6 +218,9 @@ CTEST_SUBMIT_RETRY_DELAY:STRING=5
 
 //Maximum time allowed before CTest will kill the test.
 DART_TESTING_TIMEOUT:STRING=1500
+
+//Path to a program.
+GITCOMMAND:FILEPATH=C:/Program Files/Git/cmd/git.exe
 
 //Dependencies for the target
 GLEW_1130_LIB_DEPENDS:STATIC=general;opengl32;general;glu32;
@@ -278,7 +281,7 @@ SITE:STRING=LAPTOP-2Q7UN8JG
 SOIL_BINARY_DIR:STATIC=D:/HMTY/7ο ΕΞΑΜΗΝΟ/ΓΡΑΦΙΚΑ/UP_the_remake/build/external/Simple-OpenGL-Image-Library
 
 //Build tests
-SOIL_BUILD_TESTS:BOOL=false
+SOIL_BUILD_TESTS:BOOL=OFF
 
 //Value Computed by CMake
 SOIL_IS_TOP_LEVEL:STATIC=OFF
@@ -476,6 +479,8 @@ DART_TESTING_TIMEOUT-ADVANCED:INTERNAL=1
 FIND_PACKAGE_MESSAGE_DETAILS_OpenGL:INTERNAL=[opengl32][c ][v()]
 //Details about finding Threads
 FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
+//ADVANCED property for variable: GITCOMMAND
+GITCOMMAND-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: GLFW_BUILD_DOCS
 GLFW_BUILD_DOCS-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: GLFW_BUILD_EXAMPLES
