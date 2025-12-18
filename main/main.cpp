@@ -87,19 +87,13 @@ GLuint shadowModelLocation;
 GLuint quadTextureSamplerLocation;
 
 // Create two sample materials
-const Material polishedSilver{
-	vec4{0.23125, 0.23125, 0.23125, 1},
-	vec4{0.2775, 0.2775, 0.2775, 1},
-	vec4{0.773911, 0.773911, 0.773911, 1},
-	89.6f
+const Material martianTerrain{
+	vec4{0.15f, 0.05f, 0.02f, 1.0f},   // Ka: Dark rust/brown ambient
+	vec4{0.65f, 0.25f, 0.12f, 1.0f},   // Kd: Primary rusty orange diffuse
+	vec4{0.10f, 0.08f, 0.05f, 1.0f},   // Ks: Very weak, warm specular (dusty)
+	5.0f                               // Ns: Low shininess for a matte surface
 };
 
-const Material turquoise{
-	vec4{ 0.1, 0.18725, 0.1745, 0.8 },
-	vec4{ 0.396, 0.74151, 0.69102, 0.8 },
-	vec4{ 0.297254, 0.30829, 0.306678, 0.8 },
-	12.8f
-};
 
 
 // NOTE: Since the Light and Material struct are used in the shader programs as well 
@@ -371,7 +365,7 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 
 	// upload the material
-	uploadMaterial(turquoise);
+	uploadMaterial(martianTerrain);
 	glUniform1i(useTextureLocation, 0);
 
 	//draw terrain under house
