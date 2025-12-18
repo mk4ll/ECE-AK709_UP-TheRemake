@@ -22,6 +22,7 @@
 
 #include <common/terrain.h>
 
+
 using namespace std;
 using namespace glm;
 
@@ -531,11 +532,15 @@ void initialize() {
 	// Log
 	logGLParameters();
 
+	// get terrain peak
+	vec3 peak = Terrain::get_terrain_peak();
+
 	// Create camera
 	camera = new Camera(window);
 
-	// get terrain peak
-	vec3 peak = Terrain::get_terrain_peak();
+	// update camera y-position to make the scene visible
+	camera->position.y = peak.y;
+
 
 	// Task 1.1 Creating a light source
 	// Creating a custom light
