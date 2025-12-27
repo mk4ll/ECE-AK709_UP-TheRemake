@@ -12,7 +12,12 @@ uniform sampler2D diffuseColorSampler;
 uniform sampler2D specularColorSampler;
 
 uniform int useTexture = 0;
+uniform int isWater = 0;
 
+
+// task 1:
+//make river flow
+uniform float time;
 
 // light properties
 struct Light {
@@ -102,20 +107,32 @@ float ShadowCalculation(vec4 fragPositionLightspace) {
 
     if(projCoords.z > 1)
         shadow = 0.0;
-
-
-
     return shadow;
 
 }
 
 
 void phong(float visibility) {
-   
+    vec2 uv = vertex_UV;
+    
     vec4 _Ks = mtl.Ks;
     vec4 _Kd = mtl.Kd;
     vec4 _Ka = mtl.Ka;
     float _Ns = mtl.Ns;
+    
+    // dynamic water flow (ONLY when no texture is used aka for the river)
+    if (isWater == 1) {
+    // flow animation
+    uv.y += time * 0.05;
+    uv.x += sin(uv.y * 8.0 + time * 2.0) * 0.02;
+
+    // fake lighting variation - UV distortion
+    float wave = sin(uv.y * 10.0 + time * 3.0) * 0.1 + 0.9;
+
+    _Kd *= wave;
+    _Ks *= (1.0 + wave * 0.5);
+    _Ns = 80.0;
+    }
 
     // use texture for materials
     if (useTexture == 1) {
@@ -150,4 +167,9 @@ void phong(float visibility) {
         Ia + 
         Id * visibility +   // Task 4.3 Use visibility
         Is * visibility);
+    
+    // lowering the opacity of the water
+    if (isWater == 1){
+        fragmentColor.a = 0.8; 
+    }
 }

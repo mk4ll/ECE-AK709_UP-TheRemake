@@ -81,6 +81,10 @@ GLuint useTextureLocation;
 GLuint depthMapSampler;
 GLuint lightVPLocation;
 
+GLuint timeLocation;
+GLuint isWaterLocation; // flag for water properties in shader
+
+
 
 // locations for depthProgram
 GLuint shadowViewProjectionLocation;
@@ -164,6 +168,13 @@ void createContext() {
 	lightPositionLocation = glGetUniformLocation(shaderProgram, "light.lightPosition_worldspace");
 	diffuseColorSampler = glGetUniformLocation(shaderProgram, "diffuseColorSampler");
 	specularColorSampler = glGetUniformLocation(shaderProgram, "specularColorSampler");
+
+	//
+	// for time in shader
+	timeLocation = glGetUniformLocation(shaderProgram, "time");
+	// is water flag
+	isWaterLocation = glGetUniformLocation(shaderProgram, "isWater");
+	//
 
 	// Task 1.4
 	useTextureLocation = glGetUniformLocation(shaderProgram, "useTexture");
@@ -338,7 +349,6 @@ void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 }
 
 void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
-
 	// Step 1: Binding a frame buffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, W_WIDTH, W_HEIGHT);
@@ -348,6 +358,8 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	// Step 3: Selecting shader program
 	glUseProgram(shaderProgram);
+	float t = glfwGetTime();
+	glUniform1f(timeLocation, t);
 
 	// Making view and projection matrices uniform to the shader program
 	glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
@@ -385,14 +397,11 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	glBindTexture(GL_TEXTURE_2D, houseSpecularTexture);			// Same process for specular texture
 	glUniform1i(specularColorSampler, 1);						//
 	
-	// Inside the fragment shader, there is an if statement whether to use  
-	// the material of an object or sample a texture
-	glUniform1i(useTextureLocation, 1);
-
 
 	// upload the material
 	uploadMaterial(martianTerrain);
 	glUniform1i(useTextureLocation, 0);
+	glUniform1i(isWaterLocation, 0);
 
 	//draw terrain under house
 	mat4 terrainModelMatrix = mat4(1.0f);
@@ -406,6 +415,7 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	uploadMaterial(riverWater);
 	glUniform1i(useTextureLocation, 0);
+	glUniform1i(isWaterLocation, 1);
 
 	mat4 riverModelMatrix = mat4(1.0f);
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &riverModelMatrix[0][0]);
@@ -564,6 +574,11 @@ void initialize() {
 
 	// enable texturing and bind the depth texture
 	glEnable(GL_TEXTURE_2D);
+
+	// enable blending
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 
 	// Log
 	logGLParameters();
