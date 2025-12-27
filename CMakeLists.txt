@@ -116,6 +116,8 @@ add_executable(main
   common/light.h
   terrain/terrain.cpp
   terrain/terrain.h
+  terrain/river.cpp
+  terrain/river.h
 
   main/ShadowMapping.fragmentshader
   main/ShadowMapping.vertexshader

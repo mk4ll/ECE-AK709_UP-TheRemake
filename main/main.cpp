@@ -21,6 +21,7 @@
 #include <common/light.h> 
 
 #include <terrain/terrain.h>
+#include <terrain/river.h>
 
 
 using namespace std;
@@ -63,6 +64,7 @@ Drawable* quad;
 Drawable* house;
 GLuint houseDiffuseTexture, houseSpecularTexture;
 Drawable* mountainTerrain;
+Drawable* river;
 //
 
 // locations for shaderProgram
@@ -87,7 +89,7 @@ GLuint shadowModelLocation;
 // locations for miniMapProgram
 GLuint quadTextureSamplerLocation;
 
-// Create two sample materials
+// Terrain material
 const Material martianTerrain{
 	vec4{0.15f, 0.05f, 0.02f, 1.0f},   // Ka: Dark rust/brown ambient
 	vec4{0.65f, 0.25f, 0.12f, 1.0f},   // Kd: Primary rusty orange diffuse
@@ -95,6 +97,12 @@ const Material martianTerrain{
 	5.0f                               // Ns: Low shininess for a matte surface
 };
 
+const Material riverWater{
+	vec4{0.02f, 0.05f, 0.10f, 1.0f},	// Ka: Dark blue ambient
+	vec4{0.05f, 0.25f, 0.45f, 1.0f},	// Kd: blue diffuse
+	vec4{0.8f, 0.9f, 1.0f, 1.0f},		// Ks: strong specular for shiny effect
+	80.0f								// Ns: high specualr factor for high shininess
+};
 
 
 // NOTE: Since the Light and Material struct are used in the shader programs as well 
@@ -180,7 +188,9 @@ void createContext() {
 	// house 
 	house = new Drawable("houseUP.obj");
 	// terrain
-	mountainTerrain = Terrain::generate(100.0f, 50, 15.0f);
+	mountainTerrain = Terrain::generate(100.0f, 200.0f, 15.0f);
+	auto riverPath = Terrain::generateRiverPath(100.0f, 100.0f, 15.0f);
+	river = River::createRiver(riverPath, 10.0f);
 	// Task 2.2: Creating a 2D quad to visualize the depthmap
 	// create geometry and vao for screen-space quad
 	//*/
@@ -298,6 +308,17 @@ void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	// ---- rendering the scene ---- //
 	// creating model matrix and sending to GPU
+	// terrain
+	mat4 terrainModelMatrix = mat4(1.0f);
+	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &terrainModelMatrix[0][0]);
+	mountainTerrain->bind();
+	mountainTerrain->draw();
+	
+	// river
+	mat4 riverModelMatrix = mat4(1.0f);
+	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &riverModelMatrix[0][0]);
+	river->bind();
+	river->draw();
 
 	// house
 	mat4 modelMatrix = mat4(1.0f);
@@ -374,6 +395,20 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	mountainTerrain->bind();
 	mountainTerrain->draw();
+
+	// draw river
+	glDisable(GL_CULL_FACE);
+
+	uploadMaterial(riverWater);
+	glUniform1i(useTextureLocation, 0);
+
+	mat4 riverModelMatrix = mat4(1.0f);
+	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &riverModelMatrix[0][0]);
+
+	river->bind();
+	river->draw();
+
+	glEnable(GL_CULL_FACE);
 	
 	// house
 	// get terrain peak
@@ -443,9 +478,6 @@ void mainLoop() {
 		mat4 projectionMatrix = camera->projectionMatrix;
 		mat4 viewMatrix = camera->viewMatrix;
 
-
-
-		lighting_pass(viewMatrix, projectionMatrix);
 
 		// Task 1.5
 		// Rendering the scene from light's perspective when F1 is pressed

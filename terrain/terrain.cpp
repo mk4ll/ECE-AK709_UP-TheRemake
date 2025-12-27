@@ -115,3 +115,30 @@ Drawable* Terrain::generate(float size, int resolution, float maxHeight) {
 
     return new Drawable(vertices, uvs, normals);
 }
+
+// river
+
+vector<vec3> Terrain::generateRiverPath(float size, int resolution, float maxHeight)
+{
+    vector<vec3> path;
+
+    float step = size / resolution;
+    float offset = size / 2.0f;
+
+    for (int j = 0; j <= resolution; j++) {
+        float z = j * step - offset;
+        float nz = z / size;
+
+        // same meander as before
+        float meander = sin(nz * 16.0f) * 0.025f;
+        float x = meander * size;
+
+        float y = getHeight(x, z, size, maxHeight);
+
+        // elevation to make it visible 
+        path.push_back(vec3(x, y + 0.05f, z));
+    }
+
+    return path;
+}
+
