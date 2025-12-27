@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <glm/glm.hpp>
-#include <common/model.h> // where Drawable is defined
+#include <common/model.h> // for Drawable
 
 class Terrain {
 public:
@@ -13,12 +13,9 @@ public:
     // calculate the peak position
     static glm::vec3 get_terrain_peak();
 
-    // generate river
-    static std::vector<glm::vec3> generateRiverPath(
-        float size,
-        int resolution,
-        float maxHeight
-    );
+    // generate river (basically we just fill the canyon up to a certain height)
+    static float sampleHeight(float x, float z, float size, float maxHeight);
+
 
 private:
     static float getHeight(float x, float z, float size, float maxHeight);

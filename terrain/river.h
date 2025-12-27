@@ -8,7 +8,7 @@
 class River {
 public:
     // Creates a river mesh from a path (center line)
-    static Drawable* createRiver(const std::vector<glm::vec3>& path, float width);
+    static Drawable* createFloodedCanyon(float size, int resolution, float waterLevel, float maxHeight);
 };
 
 #endif

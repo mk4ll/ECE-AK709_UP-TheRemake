@@ -188,9 +188,14 @@ void createContext() {
 	// house 
 	house = new Drawable("houseUP.obj");
 	// terrain
-	mountainTerrain = Terrain::generate(100.0f, 200.0f, 15.0f);
-	auto riverPath = Terrain::generateRiverPath(100.0f, 100.0f, 15.0f);
-	river = River::createRiver(riverPath, 10.0f);
+	float size = 100.0f;
+	float res = 200.0f;
+	float maxHeight = 15.0f;
+
+	mountainTerrain = Terrain::generate(size, res, maxHeight);
+
+	float waterLevel = -2.0f;
+	river = River::createFloodedCanyon(size, res, waterLevel, maxHeight);
 	// Task 2.2: Creating a 2D quad to visualize the depthmap
 	// create geometry and vao for screen-space quad
 	//*/
@@ -492,7 +497,7 @@ void mainLoop() {
 		//*/
 
 		// Task 2.2:
-		renderMiniMap();
+		//renderMiniMap();
 
 
 		glfwSwapBuffers(window);
