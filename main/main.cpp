@@ -20,7 +20,7 @@
 #include <common/texture.h>
 #include <common/light.h> 
 
-#include <common/terrain.h>
+#include <terrain/terrain.h>
 
 
 using namespace std;
