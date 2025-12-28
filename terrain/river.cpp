@@ -40,10 +40,17 @@ Drawable* River::createFloodedCanyon(float size, int resolution, float waterLeve
                 v1, v2, v3,
                 v2, v4, v3
                 });
+            // worldspace UVs
+            float uvScale = 0.05f;
 
             uvs.insert(uvs.end(), {
-                {0,0},{0,1},{1,0},
-                {0,1},{1,1},{1,0}
+                {x1 * uvScale, z1 * uvScale},
+                {x1 * uvScale, z2 * uvScale},
+                {x2 * uvScale, z1 * uvScale},
+
+                {x1 * uvScale, z2 * uvScale},
+                {x2 * uvScale, z2 * uvScale},
+                {x2 * uvScale, z1 * uvScale}
                 });
 
             for (int k = 0; k < 6; k++)

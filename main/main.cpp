@@ -65,6 +65,8 @@ Drawable* house;
 GLuint houseDiffuseTexture, houseSpecularTexture;
 Drawable* mountainTerrain;
 Drawable* river;
+GLuint waterDiffuseTexture, waterSpecularTexture;
+GLuint waterDuDvTexture;
 //
 
 // locations for shaderProgram
@@ -82,7 +84,8 @@ GLuint depthMapSampler;
 GLuint lightVPLocation;
 
 GLuint timeLocation;
-GLuint isWaterLocation; // flag for water properties in shader
+
+GLuint dudvSampler;
 
 
 
@@ -169,11 +172,10 @@ void createContext() {
 	diffuseColorSampler = glGetUniformLocation(shaderProgram, "diffuseColorSampler");
 	specularColorSampler = glGetUniformLocation(shaderProgram, "specularColorSampler");
 
+	dudvSampler = glGetUniformLocation(shaderProgram, "dudvSampler");
 	//
 	// for time in shader
 	timeLocation = glGetUniformLocation(shaderProgram, "time");
-	// is water flag
-	isWaterLocation = glGetUniformLocation(shaderProgram, "isWater");
 	//
 
 	// Task 1.4
@@ -195,6 +197,11 @@ void createContext() {
 	// loading a diffuse and a specular texture
 	houseDiffuseTexture = loadSOIL("house_diffuse.bmp");
 	houseSpecularTexture = loadSOIL("house_specular.bmp");
+
+	waterDiffuseTexture = loadSOIL("../terrain/water_diffuse.bmp");
+	waterSpecularTexture = loadSOIL("../terrain/water_specular.bmp");
+
+	waterDuDvTexture = loadSOIL("../terrain/water_dudv.png");
 
 	// house 
 	house = new Drawable("houseUP.obj");
@@ -401,7 +408,6 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	// upload the material
 	uploadMaterial(martianTerrain);
 	glUniform1i(useTextureLocation, 0);
-	glUniform1i(isWaterLocation, 0);
 
 	//draw terrain under house
 	mat4 terrainModelMatrix = mat4(1.0f);
@@ -413,12 +419,23 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	// draw river
 	glDisable(GL_CULL_FACE);
 
-	uploadMaterial(riverWater);
-	glUniform1i(useTextureLocation, 0);
-	glUniform1i(isWaterLocation, 1);
+	// DuDv map
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, waterDuDvTexture);
+	glUniform1i(dudvSampler, 3);
 
-	mat4 riverModelMatrix = mat4(1.0f);
-	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &riverModelMatrix[0][0]);
+	// diffuse
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, waterDiffuseTexture);
+	glUniform1i(diffuseColorSampler, 0);
+
+	// specular 
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, waterSpecularTexture);
+	glUniform1i(specularColorSampler, 1);
+
+
+	glUniform1i(useTextureLocation, 2);
 
 	river->bind();
 	river->draw();
