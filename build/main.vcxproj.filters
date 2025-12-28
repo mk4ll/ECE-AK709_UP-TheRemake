@@ -28,6 +28,21 @@
     <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\terrain\river.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\balloons\Balloon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\balloons\BalloonTypes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\balloons\Rope.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\CollisionDetection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\PhysicsWorld.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\common\util.h">
@@ -54,27 +69,45 @@
     <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\terrain\river.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\balloons\Balloon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\balloons\BalloonTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\balloons\Rope.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\RigidBody.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\CollisionDetection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\PhysicsWorld.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\main\ShadowMapping.fragmentshader">
+    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\ShadowMapping.fragmentshader">
       <Filter>shaders</Filter>
     </None>
-    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\main\ShadowMapping.vertexshader">
+    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\ShadowMapping.vertexshader">
       <Filter>shaders</Filter>
     </None>
-    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\main\Depth.fragmentshader">
+    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\Depth.fragmentshader">
       <Filter>shaders</Filter>
     </None>
-    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\main\Depth.vertexshader">
+    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\Depth.vertexshader">
       <Filter>shaders</Filter>
     </None>
-    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\main\MiniMap.fragmentshader">
+    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\MiniMap.fragmentshader">
       <Filter>shaders</Filter>
     </None>
-    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\main\MiniMap.vertexshader">
+    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\MiniMap.vertexshader">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

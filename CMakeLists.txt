@@ -118,13 +118,24 @@ add_executable(main
   terrain/terrain.h
   terrain/river.cpp
   terrain/river.h
+  balloons/Balloon.cpp
+  balloons/Balloon.h
+  balloons/BalloonTypes.cpp
+  balloons/BalloonTypes.h
+  balloons/Rope.cpp
+  balloons/Rope.h
+  physics/RigidBody.h
+  physics/CollisionDetection.cpp
+  physics/CollisionDetection.h
+  physics/PhysicsWorld.cpp
+  physics/PhysicsWorld.h
 
-  main/ShadowMapping.fragmentshader
-  main/ShadowMapping.vertexshader
-  main/Depth.fragmentshader
-  main/Depth.vertexshader
-  main/MiniMap.fragmentshader
-  main/MiniMap.vertexshader
+  shaders/ShadowMapping.fragmentshader
+  shaders/ShadowMapping.vertexshader
+  shaders/Depth.fragmentshader
+  shaders/Depth.vertexshader
+  shaders/MiniMap.fragmentshader
+  shaders/MiniMap.vertexshader
   )
 target_link_libraries(main
   ${ALL_LIBS}

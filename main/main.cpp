@@ -139,17 +139,17 @@ void uploadMaterial(const Material& mtl) {
 
 void createContext() {
 	// Create and compile our GLSL program from the shader
-	shaderProgram = loadShaders("ShadowMapping.vertexshader", "ShadowMapping.fragmentshader");
+	shaderProgram = loadShaders("../shaders/ShadowMapping.vertexshader", "../shaders/ShadowMapping.fragmentshader");
 
 	// Task 3.1 
 	// Create and load the shader program for the depth buffer construction
 	// You need to load and use the Depth.vertexshader, Depth.fragmentshader
-	depthProgram = loadShaders("Depth.vertexshader", "Depth.fragmentshader");
+	depthProgram = loadShaders("../shaders/Depth.vertexshader", "../shaders/Depth.fragmentshader");
 
 
 	// Task 2.1
 	// Use the MiniMap.vertexshader, "MiniMap.fragmentshader"
-	miniMapProgram = loadShaders("MiniMap.vertexshader", "MiniMap.fragmentshader");
+	miniMapProgram = loadShaders("../shaders/MiniMap.vertexshader", "../shaders/MiniMap.fragmentshader");
 
 
 	// NOTE: Don't forget to delete the shader programs on the free() function
@@ -195,8 +195,8 @@ void createContext() {
 
 	// Loading a model
 	// loading a diffuse and a specular texture
-	houseDiffuseTexture = loadSOIL("house_diffuse.bmp");
-	houseSpecularTexture = loadSOIL("house_specular.bmp");
+	houseDiffuseTexture = loadSOIL("../assets/textures/house_diffuse.bmp");
+	houseSpecularTexture = loadSOIL("../assets/textures/house_specular.bmp");
 
 	waterDiffuseTexture = loadSOIL("../terrain/water_diffuse.bmp");
 	waterSpecularTexture = loadSOIL("../terrain/water_specular.bmp");
@@ -204,7 +204,7 @@ void createContext() {
 	waterDuDvTexture = loadSOIL("../terrain/water_dudv.png");
 
 	// house 
-	house = new Drawable("houseUP.obj");
+	house = new Drawable("../assets/models/houseUP.obj");
 	// terrain
 	float size = 100.0f;
 	float res = 200.0f;
