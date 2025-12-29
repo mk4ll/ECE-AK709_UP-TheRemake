@@ -114,16 +114,22 @@ add_executable(main
   common/texture.h
   common/light.cpp
   common/light.h
+  common/vertex.h
+
   terrain/terrain.cpp
   terrain/terrain.h
   terrain/river.cpp
   terrain/river.h
-  balloons/Balloon.cpp
-  balloons/Balloon.h
-  balloons/BalloonTypes.cpp
-  balloons/BalloonTypes.h
-  balloons/Rope.cpp
-  balloons/Rope.h
+
+  balloons/balloon.cpp
+  balloons/balloon.h
+  balloons/balloonMesh.cpp
+  balloons/balloonMesh.h
+  balloons/balloonTypes.cpp
+  balloons/balloonTypes.h
+  balloons/rope.cpp
+  balloons/rope.h
+
   physics/RigidBody.h
   physics/CollisionDetection.cpp
   physics/CollisionDetection.h
