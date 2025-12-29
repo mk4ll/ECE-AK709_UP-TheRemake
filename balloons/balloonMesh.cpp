@@ -1,60 +1,80 @@
 #include "balloonMesh.h"
 #include <cmath>
 #include <glm/gtc/constants.hpp>
+#include <glm/glm.hpp>
 
-BalloonMesh::BalloonMesh() {
+BalloonMesh::BalloonMesh(int heightSegments, int radialSegments, float height, float radius) {
+    generate(heightSegments, radialSegments, height, radius);
+}
 
-    const int heightSegments = 20;
-    const int radialSegments = 20;
-    const float height = 2.0f;
-    const float radius = 1.0f;
+// curve that needs to be revoluted r(y):[0,H]-->[0:R]
+float BalloonMesh::radiusAt(float y, float H, float R){
 
-    // vertices
-    for (int i = 0; i <= heightSegments; i++) {
+    float h_body = H - R;
 
-        float v = (float)i / heightSegments;
-        float y = -height * 0.5f + v * height;
-
-        // balloon profile (how inflated it is)
-        float profile = sin(v * glm::pi<float>());
-        float r = radius * profile;
-
-        for (int j = 0; j <= radialSegments; j++) {
-
-            float u = (float)j / radialSegments;
-            float angle = u * glm::two_pi<float>();
-
-            float x = r * cos(angle);
-            float z = r * sin(angle);
-
-            glm::vec3 position(x, y, z);
-            glm::vec3 normal = glm::normalize(position);
-            glm::vec2 uv(u, v);
-
-            vertices.push_back({ position, normal, uv });
-        }
+    // body
+    if (y <= h_body) {
+        float r_body = y * y;
+        float scale = R / (h_body * h_body);
+        return r_body * scale;
     }
 
-    // indices
-    int ringSize = radialSegments + 1;
+    // sphere
+    float yc = h_body;
+    float dy = y - yc;
+    return std::sqrt(glm::max(0.0f, R * R - dy * dy));
+}
 
-    for (int i = 0; i < heightSegments; i++) {
-        for (int j = 0; j < radialSegments; j++) {
 
-            int A = i * ringSize + j;
-            int B = A + 1;
-            int C = A + ringSize;
-            int D = C + 1;
+void BalloonMesh::generate(int hSeg, int rSeg, float H, float R) {
+    positions.clear();
+    uvs.clear();
+
+    for (int i = 0; i < hSeg; ++i) {
+        float t0 = (float)i / hSeg;
+        float t1 = (float)(i + 1) / hSeg;
+
+        float y0 = H * t0;
+        float y1 = H * t1;
+
+        float r0 = radiusAt(y0, H, R);
+        float r1 = radiusAt(y1, H, R);
+
+        for (int j = 0; j < rSeg; ++j) {
+            float u0 = (float)j / rSeg;
+            float u1 = (float)(j + 1) / rSeg;
+
+            float th0 = u0 * glm::two_pi<float>();
+            float th1 = u1 * glm::two_pi<float>();
+
+            // quad vertices
+            glm::vec3 p00(r0 * cos(th0), y0, r0 * sin(th0));
+            glm::vec3 p10(r1 * cos(th0), y1, r1 * sin(th0));
+            glm::vec3 p11(r1 * cos(th1), y1, r1 * sin(th1));
+            glm::vec3 p01(r0 * cos(th1), y0, r0 * sin(th1));
+
+            glm::vec2 uv00(u0, t0);
+            glm::vec2 uv10(u0, t1);
+            glm::vec2 uv11(u1, t1);
+            glm::vec2 uv01(u1, t0);
 
             // triangle 1
-            indices.push_back(A);
-            indices.push_back(C);
-            indices.push_back(B);
+            positions.push_back(p00);
+            positions.push_back(p10);
+            positions.push_back(p11);
+
+            uvs.push_back(uv00);
+            uvs.push_back(uv10);
+            uvs.push_back(uv11);
 
             // triangle 2
-            indices.push_back(B);
-            indices.push_back(C);
-            indices.push_back(D);
+            positions.push_back(p00);
+            positions.push_back(p11);
+            positions.push_back(p01);
+
+            uvs.push_back(uv00);
+            uvs.push_back(uv11);
+            uvs.push_back(uv01);
         }
     }
 }

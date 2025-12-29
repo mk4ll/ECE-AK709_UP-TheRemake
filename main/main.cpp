@@ -22,6 +22,7 @@
 
 #include <terrain/terrain.h>
 #include <terrain/river.h>
+#include <balloons/balloonMesh.h>
 
 
 using namespace std;
@@ -67,6 +68,12 @@ Drawable* mountainTerrain;
 Drawable* river;
 GLuint waterDiffuseTexture, waterSpecularTexture;
 GLuint waterDuDvTexture;
+//
+
+//
+// task2: balloons
+Drawable* balloon;
+BalloonMesh balloonMesh;
 //
 
 // locations for shaderProgram
@@ -214,9 +221,15 @@ void createContext() {
 
 	float waterLevel = -2.0f;
 	river = River::createFloodedCanyon(size, res, waterLevel, maxHeight);
+
+	// balloons
+	balloon = new Drawable(balloonMesh.positions, balloonMesh.uvs);
+
+
+	//
 	// Task 2.2: Creating a 2D quad to visualize the depthmap
 	// create geometry and vao for screen-space quad
-	//*/
+	/*
 	vector<vec3> quadVertices = {
 	  vec3(0.5, 0.5, -1.0),
 	  vec3(1.0, 0.5, -1.0),
@@ -236,7 +249,7 @@ void createContext() {
 	};
 
 	quad = new Drawable(quadVertices, quadUVs);
-
+	*/
 	//*/
 
 
@@ -463,6 +476,22 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	house->bind();
 	house->draw();
+
+	// balloons
+
+
+	// balloon
+	mat4 balloonModelMatrix = translate(mat4(1.0f), vec3(0.0f, 5.0f, 0.0f));
+	balloonModelMatrix = scale(balloonModelMatrix, vec3(0.5f));
+
+	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &balloonModelMatrix[0][0]);
+	
+	// upload the material
+	uploadMaterial(riverWater);
+	glUniform1i(useTextureLocation, 0);
+
+	balloon->bind();
+	balloon->draw();
 
 }
 
