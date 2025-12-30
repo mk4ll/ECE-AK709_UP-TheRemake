@@ -6,6 +6,7 @@ in vec4 light_position_cameraspace;
 in vec2 vertex_UV;
 in vec4 vertex_position_lightspace;
            
+in vec3 frag_position_world;
 
 uniform sampler2D shadowMapSampler;
 uniform sampler2D diffuseColorSampler;
@@ -43,7 +44,7 @@ out vec4 fragmentColor;
 void phong(float visibility);
 float ShadowCalculation(vec4 fragPositionLightspace);
 
-
+vec3 computeWorldNormal();
 
 void main() {   
     
@@ -113,7 +114,6 @@ float ShadowCalculation(vec4 fragPositionLightspace) {
 
 
 void phong(float visibility) {
-    vec3 Nused = normalize(vertex_normal_cameraspace.xyz);
     vec2 uv = vertex_UV;
     
     vec4 _Ks = mtl.Ks;
@@ -121,6 +121,10 @@ void phong(float visibility) {
     vec4 _Ka = mtl.Ka;
     float _Ns = mtl.Ns;
     
+    // model diffuse intensity (Id)
+    vec4 N = normalize(vertex_normal_cameraspace);
+    vec4 L = normalize(light_position_cameraspace - vertex_position_cameraspace);
+
     // use texture for HOUSE
     if (useTexture == 1) {
         _Ks = vec4(texture(specularColorSampler, vertex_UV).rgb, 1.0);
@@ -128,9 +132,6 @@ void phong(float visibility) {
         _Ka = vec4(0.05 * _Kd.rgb, _Kd.a);
         _Ns = 10;
     }
-    // model diffuse intensity (Id)
-    vec4 N = normalize(vertex_normal_cameraspace); 
-    vec4 L = normalize(light_position_cameraspace - vertex_position_cameraspace);
 
     // for WATER
     if (useTexture == 2) {
@@ -169,6 +170,11 @@ void phong(float visibility) {
         _Ns = mix(40.0, 160.0, fresnel);
    
     }
+
+    if (useTexture == 3){
+        N = vec4(computeWorldNormal(), 0.0f);
+    }
+
     // model ambient intensity (Ia)
     vec4 Ia = light.La * _Ka;
 
@@ -197,4 +203,11 @@ void phong(float visibility) {
     if (useTexture == 2){
         fragmentColor.a = 0.8; 
     }
+}
+
+
+vec3 computeWorldNormal() {
+    vec3 dx = dFdx(frag_position_world);
+    vec3 dy = dFdy(frag_position_world);
+    return normalize(cross(dx, dy));
 }

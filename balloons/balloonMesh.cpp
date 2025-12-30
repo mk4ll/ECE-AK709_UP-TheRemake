@@ -52,6 +52,13 @@ void BalloonMesh::generate(int hSeg, int rSeg, float H, float R) {
         float r0 = radiusAt(y0, H, R);
         float r1 = radiusAt(y1, H, R);
 
+        // for numerical approximation of normals
+        float eps = 0.001f;
+        float drdy0 = (radiusAt(y0 + eps, H, R) - radiusAt(y0 - eps, H, R)) / (2.0f * eps);
+        float drdy1 = (radiusAt(y1 + eps, H, R) - radiusAt(y1 - eps, H, R)) / (2.0f * eps);
+
+
+
         for (int j = 0; j < rSeg; ++j) {
             float u0 = (float)j / rSeg;
             float u1 = (float)(j + 1) / rSeg;
@@ -70,19 +77,25 @@ void BalloonMesh::generate(int hSeg, int rSeg, float H, float R) {
             glm::vec2 uv11(u1, t1);
             glm::vec2 uv01(u1, t0);
 
+            glm::vec3 n00 = glm::normalize(glm::vec3(cos(th0), -drdy0, sin(th0)));
+            glm::vec3 n10 = glm::normalize(glm::vec3(cos(th0), -drdy1, sin(th0)));
+            glm::vec3 n11 = glm::normalize(glm::vec3(cos(th1), -drdy1, sin(th1)));
+            glm::vec3 n01 = glm::normalize(glm::vec3(cos(th1), -drdy0, sin(th1)));
+
+
             // triangle 1
-            positions.push_back(p00);
-            positions.push_back(p10);
-            positions.push_back(p11);
+            positions.push_back(p00); normals.push_back(n00);
+            positions.push_back(p10); normals.push_back(n10);
+            positions.push_back(p11); normals.push_back(n11);
 
             uvs.push_back(uv00);
             uvs.push_back(uv10);
             uvs.push_back(uv11);
 
             // triangle 2
-            positions.push_back(p00);
-            positions.push_back(p11);
-            positions.push_back(p01);
+            positions.push_back(p00); normals.push_back(n00);
+            positions.push_back(p11); normals.push_back(n11);
+            positions.push_back(p01); normals.push_back(n01);
 
             uvs.push_back(uv00);
             uvs.push_back(uv11);

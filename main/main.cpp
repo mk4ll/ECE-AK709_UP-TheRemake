@@ -488,7 +488,7 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	
 	// upload the material
 	uploadMaterial(riverWater);
-	glUniform1i(useTextureLocation, 0);
+	glUniform1i(useTextureLocation, 3);
 
 	balloon->bind();
 	balloon->draw();
