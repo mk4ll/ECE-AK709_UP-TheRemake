@@ -9,17 +9,29 @@ BalloonMesh::BalloonMesh(int heightSegments, int radialSegments, float height, f
 
 // curve that needs to be revoluted r(y):[0,H]-->[0:R]
 float BalloonMesh::radiusAt(float y, float H, float R){
-
+    
+    float r_knot = 0.15f * R;
+    float h_knot = 0.08f * H;
     float h_body = H - R;
+
+    // knot
+    if (y <= h_knot) {
+        float t = y / h_knot;      // normalization [0,1]
+        return r_knot * (1.1 - t);
+    }
 
     // body
     if (y <= h_body) {
-        float r_body = y * y;
-        float scale = R / (h_body * h_body);
+        float yb = y - h_knot;
+        float hb = h_body - h_knot;
+
+        float alpha = 0.5f;
+        float r_body = std::pow(yb, alpha);
+        float scale = R / std::pow(hb, alpha);
         return r_body * scale;
     }
 
-    // sphere
+    // top (hemisphere)
     float yc = h_body;
     float dy = y - yc;
     return std::sqrt(glm::max(0.0f, R * R - dy * dy));
