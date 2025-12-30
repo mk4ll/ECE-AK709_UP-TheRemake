@@ -481,7 +481,13 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 
 	// balloon
-	mat4 balloonModelMatrix = translate(mat4(1.0f), vec3(0.0f, 5.0f, 0.0f));
+	vec3 chimneyOffset = vec3(-0.18, 4.0f, -2.0f);
+	vec3 chimneyPos = peak + chimneyOffset;
+
+
+
+
+	mat4 balloonModelMatrix = translate(mat4(1.0f), chimneyPos);
 	balloonModelMatrix = scale(balloonModelMatrix, vec3(0.5f));
 
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &balloonModelMatrix[0][0]);
