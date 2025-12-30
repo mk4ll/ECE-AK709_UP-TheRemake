@@ -10,6 +10,6 @@ public:
         const glm::vec3& origin,
         const glm::vec3& end,
         int radialSegments = 12,
-        float radius = 0.03f
+        float radius = 0.01f
     );
 };
