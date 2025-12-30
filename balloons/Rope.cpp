@@ -6,19 +6,14 @@
 using namespace glm;
 using namespace std;
 
-Drawable* Rope::create(
-    const vec3& origin,
-    const vec3& end,
-    int radialSegments,
-    float radius
-) {
+Drawable* Rope::create(const vec3& origin, const vec3&  direction, int radialSegments, float length, float radius) {
     vector<vec3> vertices;
     vector<vec2> uvs;
     vector<vec3> normals;
 
-    vec3 axis = end - origin;
-    float height = length(axis);
-    vec3 dir = normalize(axis);
+    vec3 dir = normalize(direction);
+    vec3 end = origin + dir * length;
+
 
     // create arbitrary perpendicular basis
     vec3 up = abs(dot(dir, vec3(0, 1, 0))) > 0.9f ? vec3(1, 0, 0) : vec3(0, 1, 0);

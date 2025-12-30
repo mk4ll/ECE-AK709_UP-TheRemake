@@ -236,11 +236,9 @@ void createContext() {
 	// balloons
 	vec3 peak = Terrain::get_terrain_peak();
 	vec3 chimneyOffset = vec3(-0.18, 4.0f, -2.0f);
-	float ropeLength = 5.0f;
 
 	vec3 chimneyPos = peak + chimneyOffset;
-	vec3 balloonKnotPos = chimneyPos + vec3(0.0f, ropeLength, 0.0f);
-	rope = Rope::create(chimneyPos, balloonKnotPos);
+	rope = Rope::create(chimneyPos, glm::vec3(0, 1, 0));
 	
 	balloon = new Drawable(balloonMesh.positions, balloonMesh.uvs);
 
@@ -499,23 +497,19 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	// balloons
 
 	//rope
-
-	// balloon
-	float ropeLength = 5.0f;
-
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &mat4(1.0f)[0][0]);
 
-	uploadMaterial(ropeMaterial); // ή άλλο rope material
+	uploadMaterial(ropeMaterial);
 	glUniform1i(useTextureLocation, 0);
 
 	rope->bind();
 	rope->draw();
 
+	//balloon 
 	vec3 chimneyOffset = vec3(-0.18, 4.0f, -2.0f);
 	vec3 chimneyPos = peak + chimneyOffset;
 
-	vec3 balloonPos = chimneyPos + vec3(0.0f, ropeLength, 0.0f);
-
+	vec3 balloonPos = chimneyPos + vec3(0.0f, Rope::DEFAULT_LENGTH-0.2f, 0.0f);
 
 	mat4 balloonModelMatrix = translate(mat4(1.0f), balloonPos);
 	balloonModelMatrix = scale(balloonModelMatrix, vec3(0.5f));
@@ -683,7 +677,7 @@ void initialize() {
 		vec4{ 1, 1, 1, 1 },
 		vec4{ 1, 1, 1, 1 },
 		vec4{ 1, 1, 1, 1 },
-		vec3{10, peak.y + 20, 10} // over the house and over the peak
+		vec3{10, peak.y + 20, 20} // over the house and over the peak
 	);
 
 }
