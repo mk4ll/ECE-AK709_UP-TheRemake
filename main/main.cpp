@@ -23,6 +23,7 @@
 #include <terrain/terrain.h>
 #include <terrain/river.h>
 #include <balloons/balloonMesh.h>
+#include <balloons/rope.h>
 
 
 using namespace std;
@@ -74,6 +75,7 @@ GLuint waterDuDvTexture;
 // task2: balloons
 Drawable* balloon;
 BalloonMesh balloonMesh;
+Drawable* rope;
 //
 
 // locations for shaderProgram
@@ -111,12 +113,21 @@ const Material martianTerrain{
 	5.0f                               // Ns: Low shininess for a matte surface
 };
 
-const Material riverWater{
-	vec4{0.02f, 0.05f, 0.10f, 1.0f},	// Ka: Dark blue ambient
-	vec4{0.05f, 0.25f, 0.45f, 1.0f},	// Kd: blue diffuse
-	vec4{0.8f, 0.9f, 1.0f, 1.0f},		// Ks: strong specular for shiny effect
-	80.0f								// Ns: high specualr factor for high shininess
+const Material ropeMaterial{
+	glm::vec4(0.15f, 0.12f, 0.08f, 1.0f),  // Ka (ambient) - brown ambient
+	glm::vec4(0.45f, 0.38f, 0.25f, 1.0f),  // Kd (diffuse) - natural diffuse
+	glm::vec4(0.05f, 0.05f, 0.05f, 1.0f),  // Ks (specular) - ~0
+	4.0f                                   // Ns - low shininess
 };
+
+const Material redBalloon{
+	glm::vec4(0.12f, 0.02f, 0.02f, 1.0f),  // Ka – red ambient
+	glm::vec4(0.85f, 0.10f, 0.10f, 1.0f),  // Kd – red diffuse
+	glm::vec4(0.35f, 0.35f, 0.35f, 1.0f),  // Ks – latex like
+	48.0f                                  // Ns
+};
+
+
 
 
 // NOTE: Since the Light and Material struct are used in the shader programs as well 
@@ -223,6 +234,14 @@ void createContext() {
 	river = River::createFloodedCanyon(size, res, waterLevel, maxHeight);
 
 	// balloons
+	vec3 peak = Terrain::get_terrain_peak();
+	vec3 chimneyOffset = vec3(-0.18, 4.0f, -2.0f);
+	float ropeLength = 5.0f;
+
+	vec3 chimneyPos = peak + chimneyOffset;
+	vec3 balloonKnotPos = chimneyPos + vec3(0.0f, ropeLength, 0.0f);
+	rope = Rope::create(chimneyPos, balloonKnotPos);
+	
 	balloon = new Drawable(balloonMesh.positions, balloonMesh.uvs);
 
 
@@ -479,9 +498,18 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	// balloons
 
+	//rope
 
 	// balloon
 	float ropeLength = 5.0f;
+
+	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &mat4(1.0f)[0][0]);
+
+	uploadMaterial(ropeMaterial); // ή άλλο rope material
+	glUniform1i(useTextureLocation, 0);
+
+	rope->bind();
+	rope->draw();
 
 	vec3 chimneyOffset = vec3(-0.18, 4.0f, -2.0f);
 	vec3 chimneyPos = peak + chimneyOffset;
@@ -495,7 +523,7 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &balloonModelMatrix[0][0]);
 	
 	// upload the material
-	uploadMaterial(riverWater);
+	uploadMaterial(redBalloon);
 	glUniform1i(useTextureLocation, 3);
 
 	balloon->bind();
