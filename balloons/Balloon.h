@@ -4,6 +4,8 @@
 #include <common/model.h>
 #include "ropeInstance.h"
 
+#include "../physics/rigidBody.h"
+
 class Balloon {
 public:
 
@@ -21,6 +23,8 @@ public:
 private:
     Drawable* m_mesh;
     RopeInstance* m_rope;
+
+    RigidBody m_body;
 
     glm::vec3 m_position;
     glm::vec3 m_anchor;
