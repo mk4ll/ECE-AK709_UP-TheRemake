@@ -114,7 +114,7 @@ add_executable(main
   common/texture.h
   common/light.cpp
   common/light.h
-  common/vertex.h
+  common/material.h
 
   terrain/terrain.cpp
   terrain/terrain.h
@@ -130,11 +130,14 @@ add_executable(main
   balloons/rope.cpp
   balloons/rope.h
 
-  physics/RigidBody.h
-  physics/CollisionDetection.cpp
-  physics/CollisionDetection.h
-  physics/PhysicsWorld.cpp
-  physics/PhysicsWorld.h
+  physics/rigidBody.h
+  physics/collisionDetection.cpp
+  physics/collisionDetection.h
+  physics/physicsWorld.cpp
+  physics/physicsWorld.h
+
+  render/render.h
+  render/render.cpp
 
   shaders/ShadowMapping.fragmentshader
   shaders/ShadowMapping.vertexshader

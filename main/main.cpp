@@ -24,6 +24,7 @@
 #include <terrain/river.h>
 #include <balloons/balloonMesh.h>
 #include <balloons/rope.h>
+#include <balloons/balloon.h>
 
 
 using namespace std;
@@ -76,6 +77,7 @@ GLuint waterDuDvTexture;
 Drawable* balloon;
 BalloonMesh balloonMesh;
 Drawable* rope;
+Balloon* balloonObj;
 //
 
 // locations for shaderProgram
@@ -239,8 +241,13 @@ void createContext() {
 
 	vec3 chimneyPos = peak + chimneyOffset;
 	rope = Rope::create(chimneyPos, glm::vec3(0, 1, 0));
-	
+
 	balloon = new Drawable(balloonMesh.positions, balloonMesh.uvs);
+
+	balloonObj = new Balloon(balloon);
+
+	vec3 balloonPos = chimneyPos + vec3(0.0f, Rope::DEFAULT_LENGTH - 0.2f, 0.0f);
+	balloonObj->setAnchor(balloonPos);
 
 
 	//
@@ -366,7 +373,7 @@ void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &terrainModelMatrix[0][0]);
 	mountainTerrain->bind();
 	mountainTerrain->draw();
-	
+
 	// river
 	mat4 riverModelMatrix = mat4(1.0f);
 	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &riverModelMatrix[0][0]);
@@ -429,11 +436,11 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	glActiveTexture(GL_TEXTURE0);								// Activate texture position
 	glBindTexture(GL_TEXTURE_2D, houseDiffuseTexture);			// Assign texture to position 
 	glUniform1i(diffuseColorSampler, 0);						// Assign sampler to that position
-	
+
 	glActiveTexture(GL_TEXTURE1);								//
 	glBindTexture(GL_TEXTURE_2D, houseSpecularTexture);			// Same process for specular texture
 	glUniform1i(specularColorSampler, 1);						//
-	
+
 
 	// upload the material
 	uploadMaterial(martianTerrain);
@@ -471,7 +478,7 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	river->draw();
 
 	glEnable(GL_CULL_FACE);
-	
+
 	// house
 	// get terrain peak
 	vec3 peak = Terrain::get_terrain_peak();
@@ -495,7 +502,6 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	house->draw();
 
 	// balloons
-
 	//rope
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &mat4(1.0f)[0][0]);
 
@@ -509,19 +515,18 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	vec3 chimneyOffset = vec3(-0.18, 4.0f, -2.0f);
 	vec3 chimneyPos = peak + chimneyOffset;
 
-	vec3 balloonPos = chimneyPos + vec3(0.0f, Rope::DEFAULT_LENGTH-0.2f, 0.0f);
+	vec3 balloonPos = chimneyPos + vec3(0.0f, Rope::DEFAULT_LENGTH - 0.2f, 0.0f);
 
 	mat4 balloonModelMatrix = translate(mat4(1.0f), balloonPos);
 	balloonModelMatrix = scale(balloonModelMatrix, vec3(0.5f));
 
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &balloonModelMatrix[0][0]);
-	
+
 	// upload the material
 	uploadMaterial(redBalloon);
 	glUniform1i(useTextureLocation, 3);
 
-	balloon->bind();
-	balloon->draw();
+	balloonObj->draw(modelMatrixLocation);
 
 }
 
@@ -543,7 +548,7 @@ void renderMiniMap() {
 
 
 void mainLoop() {
-
+	static float lastTime = 0.0f;
 
 	light->update();
 	mat4 light_proj = light->projectionMatrix;
@@ -555,7 +560,7 @@ void mainLoop() {
 
 
 	do {
-		
+
 		light->update();
 		mat4 light_proj = light->projectionMatrix;
 		mat4 light_view = light->viewMatrix;
@@ -568,13 +573,26 @@ void mainLoop() {
 		camera->update();
 		mat4 projectionMatrix = camera->projectionMatrix;
 		mat4 viewMatrix = camera->viewMatrix;
+		// Balloon Functions
+		float dt = glfwGetTime() - lastTime;
+		lastTime = glfwGetTime();
 
+		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
+			balloonObj->inflate(dt);
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
+			balloonObj->release();
+		}
+
+		balloonObj->update(dt);
+		//
 
 		// Task 1.5
 		// Rendering the scene from light's perspective when F1 is pressed
 		//*/
 		if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
-			lighting_pass( light_view , light_proj );
+			lighting_pass(light_view, light_proj);
 		}
 		else {
 			// Render the scene from camera's perspective
@@ -677,7 +695,7 @@ void initialize() {
 		vec4{ 1, 1, 1, 1 },
 		vec4{ 1, 1, 1, 1 },
 		vec4{ 1, 1, 1, 1 },
-		vec3{10, peak.y + 20, 20} // over the house and over the peak
+		vec3{ 10, peak.y + 20, 20 } // over the house and over the peak
 	);
 
 }
