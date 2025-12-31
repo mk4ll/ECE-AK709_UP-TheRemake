@@ -25,6 +25,7 @@
 #include <balloons/balloonMesh.h>
 #include <balloons/rope.h>
 #include <balloons/balloon.h>
+#include <balloons/ropeInstance.h>
 
 
 using namespace std;
@@ -78,6 +79,7 @@ Drawable* balloon;
 BalloonMesh balloonMesh;
 Drawable* rope;
 Balloon* balloonObj;
+RopeInstance* ropeInstance;
 //
 
 // locations for shaderProgram
@@ -237,17 +239,20 @@ void createContext() {
 
 	// balloons
 	vec3 peak = Terrain::get_terrain_peak();
-	vec3 chimneyOffset = vec3(-0.18, 4.0f, -2.0f);
-
+	vec3 chimneyOffset = vec3(-0.18f, 4.0f, -2.0f);
 	vec3 chimneyPos = peak + chimneyOffset;
-	rope = Rope::create(chimneyPos, glm::vec3(0, 1, 0));
 
+	// balloon
 	balloon = new Drawable(balloonMesh.positions, balloonMesh.uvs);
-
 	balloonObj = new Balloon(balloon);
 
-	vec3 balloonPos = chimneyPos + vec3(0.0f, Rope::DEFAULT_LENGTH - 0.2f, 0.0f);
-	balloonObj->setAnchor(balloonPos);
+	// ropeInstance
+	ropeInstance = new RopeInstance(Rope::DEFAULT_LENGTH);
+	balloonObj->attachRope(ropeInstance);
+
+	// anchor = chimney
+	balloonObj->setAnchor(chimneyPos);
+
 
 
 	//
@@ -507,9 +512,6 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	uploadMaterial(ropeMaterial);
 	glUniform1i(useTextureLocation, 0);
-
-	rope->bind();
-	rope->draw();
 
 	//balloon 
 	vec3 chimneyOffset = vec3(-0.18, 4.0f, -2.0f);

@@ -11,8 +11,8 @@ Drawable* Rope::create(const vec3& origin, const vec3&  direction, int radialSeg
     vector<vec2> uvs;
     vector<vec3> normals;
 
-    vec3 dir = normalize(direction);
-    vec3 end = origin + dir * length;
+    vec3 dir = vec3(0, 1, 0);
+    vec3 end = origin + dir;
 
 
     // create arbitrary perpendicular basis

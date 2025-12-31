@@ -1,8 +1,7 @@
 #include "balloon.h"
-
-#include <iostream>
 #include <GL/glew.h>
 #include <glm/gtc/matrix_transform.hpp>
+
 
 using namespace glm;
 
@@ -17,25 +16,19 @@ Balloon::Balloon(Drawable* mesh)
 {
 }
 
-
-void Balloon::attachRope(Drawable* rope) {
+void Balloon::attachRope(RopeInstance* rope) {
     m_rope = rope;
 }
 
 void Balloon::setAnchor(const glm::vec3& anchor) {
     m_anchor = anchor;
-    m_position = anchor;
+    m_position = anchor + glm::vec3(0.0f, 5.0f, 0.0f);;
 }
-
 
 void Balloon::inflate(float dt) {
-    std::cout << "INFLATE CALLED, dt = " << dt << std::endl;
-
     if (m_popped || m_released) return;
-
-    m_scale += m_inflateSpeed * dt;
+    m_scale = glm::min(m_scale + m_inflateSpeed * dt, m_maxScale);
 }
-
 
 void Balloon::release() {
     m_attached = false;
@@ -43,36 +36,39 @@ void Balloon::release() {
     m_velocity = glm::vec3(0.0f, 1.5f, 0.0f);
 }
 
-
 void Balloon::pop() {
     m_popped = true;
-    // later: spawn particles
 }
 
 void Balloon::update(float dt) {
-
-    if (m_popped)
-        return;
+    if (m_popped) return;
 
     if (m_attached) {
-        // locked on chimney
-        m_position = m_anchor;
+        m_position = m_anchor + glm::vec3(0.0f, 5.0f, 0.0f);
     }
     else if (m_released) {
-        // free balloon
         m_position += m_velocity * dt;
+        m_anchor += m_velocity * dt;
+    }
+
+    if (m_rope) {
+        m_rope->update(m_anchor, m_position);
     }
 }
-
 
 void Balloon::draw(GLuint modelMatrixLocation) const {
     if (m_popped) return;
 
+    // balloon
     mat4 M = translate(mat4(1.0f), m_position);
     M = scale(M, vec3(m_scale));
-
     glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &M[0][0]);
-
     m_mesh->bind();
     m_mesh->draw();
+
+    // rope
+    if (m_rope) {
+        m_rope->draw(modelMatrixLocation);
+    }
+
 }

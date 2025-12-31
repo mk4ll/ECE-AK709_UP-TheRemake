@@ -129,6 +129,8 @@ add_executable(main
   balloons/balloonTypes.h
   balloons/rope.cpp
   balloons/rope.h
+  balloons/ropeInstance.cpp
+  balloons/ropeInstance.h
 
   physics/rigidBody.h
   physics/collisionDetection.cpp
@@ -136,8 +138,8 @@ add_executable(main
   physics/physicsWorld.cpp
   physics/physicsWorld.h
 
-  render/render.h
   render/render.cpp
+  render/render.h
 
   shaders/ShadowMapping.fragmentshader
   shaders/ShadowMapping.vertexshader

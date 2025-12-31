@@ -2,12 +2,14 @@
 
 #include <glm/glm.hpp>
 #include <common/model.h>
+#include "ropeInstance.h"
 
 class Balloon {
 public:
+
     Balloon(Drawable* mesh);
 
-    void attachRope(Drawable* rope);
+    void attachRope(RopeInstance* rope);
     void setAnchor(const glm::vec3& anchor);
 
     void inflate(float dt);
@@ -18,7 +20,7 @@ public:
 
 private:
     Drawable* m_mesh;
-    Drawable* m_rope;
+    RopeInstance* m_rope;
 
     glm::vec3 m_position;
     glm::vec3 m_anchor;
