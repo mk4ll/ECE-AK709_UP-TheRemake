@@ -27,6 +27,8 @@
 #include <balloons/balloon.h>
 #include <balloons/ropeInstance.h>
 
+#include <physics/rigidBody.h>
+
 
 using namespace std;
 using namespace glm;

@@ -6,6 +6,8 @@ class RopeInstance {
 public:
     RopeInstance(float length);
 
+    float getLength() const { return m_length; }
+
     void update(const glm::vec3& origin, const glm::vec3& end);
     void draw(GLuint modelMatrixLocation) const;
 

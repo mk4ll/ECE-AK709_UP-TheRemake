@@ -22,7 +22,7 @@ void Balloon::attachRope(RopeInstance* rope) {
 
 void Balloon::setAnchor(const glm::vec3& anchor) {
     m_anchor = anchor;
-    m_position = anchor + glm::vec3(0.0f, 5.0f, 0.0f);;
+    m_position = anchor + glm::vec3(0.0f, m_rope->getLength(), 0.0f);;
 }
 
 void Balloon::inflate(float dt) {
@@ -44,7 +44,7 @@ void Balloon::update(float dt) {
     if (m_popped) return;
 
     if (m_attached) {
-        m_position = m_anchor + glm::vec3(0.0f, 5.0f, 0.0f);
+        m_position = m_anchor + glm::vec3(0.0f, m_rope->getLength(), 0.0f);
     }
     else if (m_released) {
         m_position += m_velocity * dt;
