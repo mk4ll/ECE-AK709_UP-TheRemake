@@ -2,39 +2,42 @@
 
 #include <glm/glm.hpp>
 #include <common/model.h>
-#include "ropeInstance.h"
 
 #include "../physics/rigidBody.h"
+#include "../physics/forces.h"
+#include "ropeInstance.h"
 
 class Balloon {
 public:
-
     Balloon(Drawable* mesh);
 
-    void attachRope(RopeInstance* rope);
+    // setup
     void setAnchor(const glm::vec3& anchor);
-
-    void inflate(float dt);
+    void attach(float ropeLength);
     void release();
-    void pop();
+
+    // simulation
+    void applyForces();
     void update(float dt);
+
+    // render
     void draw(GLuint modelMatrixLocation) const;
+
+    // access
+    const glm::vec3& getPosition() const;
 
 private:
     Drawable* m_mesh;
-    RopeInstance* m_rope;
 
+    // physics
     RigidBody m_body;
 
-    glm::vec3 m_position;
+    // rope
+    RopeInstance* m_rope;
     glm::vec3 m_anchor;
-    glm::vec3 m_velocity;
-
-    float m_scale;
-    float m_inflateSpeed = 0.4f;
-    float m_maxScale = 1.2f;
-
+    float m_ropeLength;
     bool m_attached;
-    bool m_released;
-    bool m_popped;
+
+    // balloon properties
+    float m_radius;
 };

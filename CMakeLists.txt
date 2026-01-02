@@ -132,11 +132,13 @@ add_executable(main
   balloons/ropeInstance.cpp
   balloons/ropeInstance.h
 
+  physics/rigidBody.cpp
   physics/rigidBody.h
   physics/collisionDetection.cpp
   physics/collisionDetection.h
   physics/physicsWorld.cpp
   physics/physicsWorld.h
+  physics/forces.h
 
   render/render.cpp
   render/render.h

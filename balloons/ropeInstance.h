@@ -1,4 +1,5 @@
 #pragma once
+
 #include <glm/glm.hpp>
 #include <common/model.h>
 
@@ -8,12 +9,13 @@ public:
 
     float getLength() const { return m_length; }
 
-    void update(const glm::vec3& origin, const glm::vec3& end);
+    void update(const glm::vec3& anchor, const glm::vec3& balloonPos);
     void draw(GLuint modelMatrixLocation) const;
 
 private:
-    glm::vec3 m_origin;
-    glm::vec3 m_end;
+    glm::vec3 m_anchor;
+    glm::vec3 m_balloonPos;
     float m_length;
+
     Drawable* m_mesh;
 };

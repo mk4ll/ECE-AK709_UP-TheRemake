@@ -25,7 +25,6 @@
 #include <balloons/balloonMesh.h>
 #include <balloons/rope.h>
 #include <balloons/balloon.h>
-#include <balloons/ropeInstance.h>
 
 #include <physics/rigidBody.h>
 
@@ -81,7 +80,6 @@ Drawable* balloon;
 BalloonMesh balloonMesh;
 Drawable* rope;
 Balloon* balloonObj;
-RopeInstance* ropeInstance;
 //
 
 // locations for shaderProgram
@@ -248,13 +246,9 @@ void createContext() {
 	balloon = new Drawable(balloonMesh.positions, balloonMesh.uvs);
 	balloonObj = new Balloon(balloon);
 
-	// ropeInstance
-	ropeInstance = new RopeInstance(Rope::DEFAULT_LENGTH);
-	balloonObj->attachRope(ropeInstance);
-
 	// anchor = chimney
 	balloonObj->setAnchor(chimneyPos);
-
+	balloonObj->attach(Rope::DEFAULT_LENGTH);
 
 
 	//
@@ -516,6 +510,7 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	glUniform1i(useTextureLocation, 0);
 
 	//balloon 
+	/*
 	vec3 chimneyOffset = vec3(-0.18, 4.0f, -2.0f);
 	vec3 chimneyPos = peak + chimneyOffset;
 
@@ -523,9 +518,9 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	mat4 balloonModelMatrix = translate(mat4(1.0f), balloonPos);
 	balloonModelMatrix = scale(balloonModelMatrix, vec3(0.5f));
-
+	
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &balloonModelMatrix[0][0]);
-
+	*/
 	// upload the material
 	uploadMaterial(redBalloon);
 	glUniform1i(useTextureLocation, 3);
@@ -582,13 +577,13 @@ void mainLoop() {
 		lastTime = glfwGetTime();
 
 		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
-			balloonObj->inflate(dt);
+			printf("inflate: True");
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
 			balloonObj->release();
 		}
-
+		balloonObj->applyForces();
 		balloonObj->update(dt);
 		//
 
