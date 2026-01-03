@@ -19,7 +19,6 @@ public:
     // setup
     void setAnchor(const glm::vec3& anchor);
     void attach(float ropeLength);
-    void release();
 
     // simulation
     void applyForces();
@@ -37,6 +36,10 @@ public:
     // render
     void draw(GLuint modelMatrixLocation) const;
 
+    // balloon methods
+    void release();
+    void pop();
+    void inflate();
 
 private:
     Drawable* m_mesh;

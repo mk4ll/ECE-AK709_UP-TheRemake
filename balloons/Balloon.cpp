@@ -33,12 +33,6 @@ void Balloon::attach(float ropeLength) {
     m_attached = true;
 }
 
-void Balloon::release() {
-    m_attached = false;
-
-    m_freeRopeAnchor = m_body.position - glm::vec3(0.0f, m_ropeLength, 0.0f);
-}
-
 void Balloon::applyForces() {
     if (m_state != BalloonState::Physics)
         return;
@@ -83,14 +77,14 @@ void Balloon::update(float dt) {
         return;
     }
 
+    // Physics phase
+    m_body.integrate(dt);
+
     if (!m_attached) {
         // rope follows ballon
         m_freeRopeAnchor =
             m_body.position - glm::vec3(0.0f, m_ropeLength, 0.0f);
     }
-
-    // Physics phase
-    m_body.integrate(dt);
 }
 
 bool Balloon::isAttached() const {
@@ -123,4 +117,18 @@ void Balloon::draw(GLuint modelMatrixLocation) const {
 
     m_mesh->bind();
     m_mesh->draw();
+}
+
+void Balloon::release() {
+    m_attached = false;
+}
+
+void Balloon::pop() {
+    printf("Balloon popped. ");
+    return;
+}
+
+void Balloon::inflate() {
+    printf("Balloon inflating... ");
+    return;
 }

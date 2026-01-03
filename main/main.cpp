@@ -600,11 +600,7 @@ void mainLoop() {
 			ropeStart = balloonObj->getFreeRopeAnchor(); // rope follows the balloon
 		}
 
-		ropeInstance->update(
-			ropeStart,
-			balloonObj->getPosition()
-		);
-
+		ropeInstance->update(ropeStart, balloonObj->getPosition());
 
 		//
 

@@ -31,7 +31,7 @@ void RopeInstance::draw(GLuint modelMatrixLocation) const {
 
     if (length(axis) > 0.0001f)
         M = rotate(M, angle, normalize(axis));
-
+    
     M = scale(M, vec3(1.0f, len, 1.0f));
 
     glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &M[0][0]);
