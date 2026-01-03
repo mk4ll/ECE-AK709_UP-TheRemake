@@ -28,7 +28,7 @@
 #include <balloons/ropeInstance.h>
 
 #include <physics/rigidBody.h>
-
+#include <particles/particleSystem.h>
 
 using namespace std;
 using namespace glm;
@@ -82,6 +82,8 @@ BalloonMesh balloonMesh;
 Drawable* rope;
 Balloon* balloonObj;
 RopeInstance* ropeInstance;
+ParticleSystem* popParticles = nullptr;
+
 //
 
 // locations for shaderProgram
@@ -532,6 +534,9 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	balloonObj->draw(modelMatrixLocation);
 
+	if (popParticles) {
+		popParticles->draw(modelMatrixLocation);
+	}
 }
 
 // Task 2.3: visualize the depth_map on a sub-window at the top of the screen
@@ -582,12 +587,29 @@ void mainLoop() {
 		lastTime = glfwGetTime();
 
 		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
-			printf("inflate: True");
+			balloonObj->inflate();
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
 			balloonObj->release();
 		}
+
+		if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+			if (!balloonObj->isPopped()) {
+				balloonObj->pop();
+				popParticles = new ParticleSystem(balloonObj->getPosition());
+			}
+		}
+
+		if (popParticles) {
+			popParticles->update(dt);
+			if (!popParticles->isAlive()) {
+				delete popParticles;
+				popParticles = nullptr;
+			}
+		}
+
+
 		balloonObj->applyForces();
 		balloonObj->update(dt);
 

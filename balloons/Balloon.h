@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <GL/glew.h>
 #include <common/model.h>
 
 #include "../physics/rigidBody.h"
@@ -33,6 +34,8 @@ public:
     const glm::vec3& getFreeRopeAnchor() const;
     glm::vec3 getRopeStart() const;
 
+    bool isPopped() const;
+
     // render
     void draw(GLuint modelMatrixLocation) const;
 
@@ -60,6 +63,9 @@ private:
     // kinematics spawn using states
     BalloonState m_state;
     float m_spawnTimer;
+
+    // pop method
+    bool m_popped;
 };
 
 

@@ -1,6 +1,5 @@
 #include "balloon.h"
 
-#include <GL/glew.h>
 #include <glm/gtc/matrix_transform.hpp>
 
 using namespace glm;
@@ -11,7 +10,8 @@ Balloon::Balloon(Drawable* mesh)
     m_attached(true),
     m_radius(0.5f),
     m_state(BalloonState::Spawn),
-    m_spawnTimer(0.0f)
+    m_spawnTimer(0.0f),
+    m_popped(false)
 {
     m_body.position = vec3(0.0f, 0.0f, 0.0f);
     m_body.velocity = vec3(0.0f);
@@ -27,6 +27,10 @@ void Balloon::setAnchor(const vec3& anchor) {
     m_state = BalloonState::Spawn;
     m_spawnTimer = 0.0f;
 }
+
+bool Balloon::isPopped() const {
+    return m_popped;
+}   
 
 void Balloon::attach(float ropeLength) {
     m_ropeLength = ropeLength;
@@ -117,7 +121,7 @@ const glm::vec3& Balloon::getFreeRopeAnchor() const {
 }
 
 void Balloon::draw(GLuint modelMatrixLocation) const {
-
+    if (m_popped) return;
     glm::mat4 M(1.0f);
     M = glm::translate(M, m_body.position);
     M = glm::scale(M, glm::vec3(m_radius));
@@ -133,8 +137,9 @@ void Balloon::release() {
 }
 
 void Balloon::pop() {
-    printf("Balloon popped. ");
-    return;
+    if (m_popped) return;
+    m_popped = true;
+    m_attached = true;
 }
 
 void Balloon::inflate() {
