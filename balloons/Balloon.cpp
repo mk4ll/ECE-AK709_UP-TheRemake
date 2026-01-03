@@ -91,6 +91,15 @@ bool Balloon::isAttached() const {
     return m_state == BalloonState::Physics;;
 }
 
+glm::vec3 Balloon::getRopeStart() const {
+    if (m_attached) {
+        return m_anchor; // chimney
+    }
+
+    // free rope
+    return m_body.position - glm::vec3(0.0f, m_ropeLength, 0.0f);
+}
+
 const glm::vec3& Balloon::getAnchor() const {
     return m_anchor;
 }

@@ -31,7 +31,7 @@ public:
     float getRopeLength() const;
 
     const glm::vec3& getFreeRopeAnchor() const;
-
+    glm::vec3 getRopeStart() const;
 
     // render
     void draw(GLuint modelMatrixLocation) const;

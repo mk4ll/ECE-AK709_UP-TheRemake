@@ -8,7 +8,12 @@ RopeInstance::RopeInstance(float length)
     : m_length(length)
 {
     // mesh (0,0,0) -> (0,1,0)
-    m_mesh = Rope::create(vec3(0), vec3(0, 1, 0));
+    m_mesh = Rope::create(
+        vec3(0), vec3(0, 1, 0), 
+        12, // radial segments
+        1.0f,
+        Rope::DEFAULT_RADIUS
+    );
 }
 
 void RopeInstance::update(const vec3& anchor, const vec3& balloonPos) {
@@ -31,7 +36,7 @@ void RopeInstance::draw(GLuint modelMatrixLocation) const {
 
     if (length(axis) > 0.0001f)
         M = rotate(M, angle, normalize(axis));
-    
+
     M = scale(M, vec3(1.0f, len, 1.0f));
 
     glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &M[0][0]);
