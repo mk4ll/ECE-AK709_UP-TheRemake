@@ -12,10 +12,9 @@ namespace Forces {
         const float g = 9.8f;
         const float pi = 3.1415926f;
 
-        float V = (4.0f / 3.0f) * pi * radius * radius * radius;
+        float V = (4.0f / 3.0f) * pi * pow(rho, 3);
 
-        float liftMultiplier = 6.0f;
-        return glm::vec3(0, rho * V * g * liftMultiplier, 0);
+        return glm::vec3(0, rho * V * g, 0);
     }
 
     inline glm::vec3 drag(const glm::vec3& v, float kd) {

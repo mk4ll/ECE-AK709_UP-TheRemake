@@ -9,17 +9,20 @@ Balloon::Balloon(Drawable* mesh)
     : m_mesh(mesh),
     m_ropeLength(5.0f),
     m_attached(true),
-    m_radius(0.5f)
+    m_radius(0.5f),
+    m_simulationEnabled(false)
 {
     m_body.position = vec3(0.0f, 0.0f, 0.0f);
     m_body.velocity = vec3(0.0f);
-    m_body.mass = 0.8f;
+    m_body.mass = 1.2f;
 }
 
 void Balloon::setAnchor(const vec3& anchor) {
     m_anchor = anchor;
-    m_body.position = m_anchor + vec3(0.0f, m_ropeLength, 0.0f);
-    m_body.velocity = vec3(0.0f);
+    m_body.position = m_anchor + glm::vec3(0.0f, 1.2f, 0.0f);
+
+    m_body.velocity = glm::vec3(0.0f);
+    m_simulationEnabled = false;
 }
 
 void Balloon::attach(float ropeLength) {
@@ -32,7 +35,8 @@ void Balloon::release() {
 }
 
 void Balloon::applyForces() {
-
+    if (!m_simulationEnabled)
+        return;
     // gravity
     m_body.applyForce(Forces::gravity(m_body.mass));
 
@@ -59,7 +63,11 @@ void Balloon::applyForces() {
 }
 
 void Balloon::update(float dt) {
-    m_body.integrate(dt);
+    if (!m_simulationEnabled) {
+        // after the first frame we enable the physics simulation
+        m_simulationEnabled = true;
+        return;
+    }
 }
 
 bool Balloon::isAttached() const {

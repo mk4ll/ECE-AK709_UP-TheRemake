@@ -29,6 +29,7 @@ public:
     // render
     void draw(GLuint modelMatrixLocation) const;
 
+
 private:
     Drawable* m_mesh;
 
@@ -42,4 +43,8 @@ private:
 
     // balloon properties
     float m_radius;
+
+    // kinematics spawn
+
+    bool m_simulationEnabled;
 };
