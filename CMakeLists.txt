@@ -139,6 +139,11 @@ add_executable(main
   physics/physicsWorld.h
   physics/forces.h
 
+  particles/particle.cpp
+  particles/particle.h
+  particles/particleSystem.cpp
+  particles/particleSystem.h
+
   render/render.cpp
   render/render.h
 

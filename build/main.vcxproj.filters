@@ -49,6 +49,12 @@
     <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\physicsWorld.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\particles\particle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\particles\particleSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\render\render.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -106,6 +112,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\forces.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\particles\particle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\particles\particleSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\render\render.h">
