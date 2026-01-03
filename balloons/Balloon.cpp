@@ -10,7 +10,8 @@ Balloon::Balloon(Drawable* mesh)
     m_ropeLength(5.0f),
     m_attached(true),
     m_radius(0.5f),
-    m_simulationEnabled(false)
+    m_state(BalloonState::Spawn),
+    m_spawnTimer(0.0f)
 {
     m_body.position = vec3(0.0f, 0.0f, 0.0f);
     m_body.velocity = vec3(0.0f);
@@ -22,7 +23,9 @@ void Balloon::setAnchor(const vec3& anchor) {
     m_body.position = m_anchor + glm::vec3(0.0f, 1.2f, 0.0f);
 
     m_body.velocity = glm::vec3(0.0f);
-    m_simulationEnabled = false;
+
+    m_state = BalloonState::Spawn;
+    m_spawnTimer = 0.0f;
 }
 
 void Balloon::attach(float ropeLength) {
@@ -35,7 +38,7 @@ void Balloon::release() {
 }
 
 void Balloon::applyForces() {
-    if (!m_simulationEnabled)
+    if (m_state != BalloonState::Physics)
         return;
     // gravity
     m_body.applyForce(Forces::gravity(m_body.mass));
@@ -48,30 +51,42 @@ void Balloon::applyForces() {
 
     // rope constraint (spring + damper basically)
     if (m_attached) {
-        m_body.applyForce(
-            Forces::ropeSpringDamper(
-                m_body.position,
-                m_body.velocity,
-                m_anchor,
-                m_ropeLength,
-                25.0f,   // stiffness k
-                8.0f     // damping c
-            )
-        );
-    }
+        glm::vec3 d = m_body.position - m_anchor;
+        float dist = glm::length(d);
 
+        if (dist > m_ropeLength) {
+            m_body.applyForce(
+                Forces::ropeSpringDamper(
+                    m_body.position,
+                    m_body.velocity,
+                    m_anchor,
+                    m_ropeLength,
+                    25.0f,
+                    8.0f
+                )
+            );
+        }
+    }
 }
 
 void Balloon::update(float dt) {
-    if (!m_simulationEnabled) {
-        // after the first frame we enable the physics simulation
-        m_simulationEnabled = true;
+    if (m_state == BalloonState::Spawn) {
+
+        m_spawnTimer += dt;
+
+        // short pause to make the spawn visible
+        if (m_spawnTimer > 0.15f) {
+            m_state = BalloonState::Physics;
+        }
         return;
     }
+
+    // Physics phase
+    m_body.integrate(dt);
 }
 
 bool Balloon::isAttached() const {
-    return m_attached;
+    return m_state == BalloonState::Physics;;
 }
 
 const glm::vec3& Balloon::getAnchor() const {

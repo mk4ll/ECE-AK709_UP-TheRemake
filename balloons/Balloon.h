@@ -7,6 +7,11 @@
 #include "../physics/forces.h"
 #include "ropeInstance.h"
 
+enum class BalloonState {
+    Spawn,
+    Physics
+};
+
 class Balloon {
 public:
     Balloon(Drawable* mesh);
@@ -44,7 +49,9 @@ private:
     // balloon properties
     float m_radius;
 
-    // kinematics spawn
-
-    bool m_simulationEnabled;
+    // kinematics spawn using states
+    BalloonState m_state;
+    float m_spawnTimer;
 };
+
+
