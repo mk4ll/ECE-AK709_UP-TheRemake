@@ -35,6 +35,8 @@ void Balloon::attach(float ropeLength) {
 
 void Balloon::release() {
     m_attached = false;
+
+    m_freeRopeAnchor = m_body.position - glm::vec3(0.0f, m_ropeLength, 0.0f);
 }
 
 void Balloon::applyForces() {
@@ -81,6 +83,12 @@ void Balloon::update(float dt) {
         return;
     }
 
+    if (!m_attached) {
+        // rope follows ballon
+        m_freeRopeAnchor =
+            m_body.position - glm::vec3(0.0f, m_ropeLength, 0.0f);
+    }
+
     // Physics phase
     m_body.integrate(dt);
 }
@@ -99,6 +107,10 @@ const glm::vec3& Balloon::getPosition() const {
 
 float Balloon::getRopeLength() const {
     return m_ropeLength;
+}
+
+const glm::vec3& Balloon::getFreeRopeAnchor() const {
+    return m_freeRopeAnchor;
 }
 
 void Balloon::draw(GLuint modelMatrixLocation) const {

@@ -591,10 +591,20 @@ void mainLoop() {
 		balloonObj->applyForces();
 		balloonObj->update(dt);
 
+		glm::vec3 ropeStart;
+
+		if (balloonObj->isAttached()) {
+			ropeStart = balloonObj->getAnchor();   // chimney
+		}
+		else {
+			ropeStart = balloonObj->getFreeRopeAnchor(); // rope follows the balloon
+		}
+
 		ropeInstance->update(
-			balloonObj->getAnchor(),
+			ropeStart,
 			balloonObj->getPosition()
 		);
+
 
 		//
 

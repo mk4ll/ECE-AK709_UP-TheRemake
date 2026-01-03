@@ -31,6 +31,9 @@ public:
     const glm::vec3& getPosition() const;
     float getRopeLength() const;
 
+    const glm::vec3& getFreeRopeAnchor() const;
+
+
     // render
     void draw(GLuint modelMatrixLocation) const;
 
@@ -45,6 +48,8 @@ private:
     glm::vec3 m_anchor;
     float m_ropeLength;
     bool m_attached;
+
+    glm::vec3 m_freeRopeAnchor;
 
     // balloon properties
     float m_radius;
