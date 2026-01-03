@@ -62,8 +62,20 @@ void Balloon::update(float dt) {
     m_body.integrate(dt);
 }
 
-const vec3& Balloon::getPosition() const {
+bool Balloon::isAttached() const {
+    return m_attached;
+}
+
+const glm::vec3& Balloon::getAnchor() const {
+    return m_anchor;
+}
+
+const glm::vec3& Balloon::getPosition() const {
     return m_body.position;
+}
+
+float Balloon::getRopeLength() const {
+    return m_ropeLength;
 }
 
 void Balloon::draw(GLuint modelMatrixLocation) const {
@@ -77,4 +89,3 @@ void Balloon::draw(GLuint modelMatrixLocation) const {
     m_mesh->bind();
     m_mesh->draw();
 }
-

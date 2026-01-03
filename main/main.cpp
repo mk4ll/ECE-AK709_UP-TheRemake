@@ -25,6 +25,7 @@
 #include <balloons/balloonMesh.h>
 #include <balloons/rope.h>
 #include <balloons/balloon.h>
+#include <balloons/ropeInstance.h>
 
 #include <physics/rigidBody.h>
 
@@ -80,6 +81,7 @@ Drawable* balloon;
 BalloonMesh balloonMesh;
 Drawable* rope;
 Balloon* balloonObj;
+RopeInstance* ropeInstance;
 //
 
 // locations for shaderProgram
@@ -238,6 +240,8 @@ void createContext() {
 	river = River::createFloodedCanyon(size, res, waterLevel, maxHeight);
 
 	// balloons
+	ropeInstance = new RopeInstance(Rope::DEFAULT_LENGTH);
+
 	vec3 peak = Terrain::get_terrain_peak();
 	vec3 chimneyOffset = vec3(-0.18f, 4.0f, -2.0f);
 	vec3 chimneyPos = peak + chimneyOffset;
@@ -508,6 +512,7 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	uploadMaterial(ropeMaterial);
 	glUniform1i(useTextureLocation, 0);
+	ropeInstance->draw(modelMatrixLocation);
 
 	//balloon 
 	/*
@@ -585,6 +590,12 @@ void mainLoop() {
 		}
 		balloonObj->applyForces();
 		balloonObj->update(dt);
+
+		ropeInstance->update(
+			balloonObj->getAnchor(),
+			balloonObj->getPosition()
+		);
+
 		//
 
 		// Task 1.5

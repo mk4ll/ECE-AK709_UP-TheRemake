@@ -20,11 +20,14 @@ public:
     void applyForces();
     void update(float dt);
 
+    // baloon-rope relation
+    bool isAttached() const;
+    const glm::vec3& getAnchor() const;
+    const glm::vec3& getPosition() const;
+    float getRopeLength() const;
+
     // render
     void draw(GLuint modelMatrixLocation) const;
-
-    // access
-    const glm::vec3& getPosition() const;
 
 private:
     Drawable* m_mesh;
@@ -33,7 +36,6 @@ private:
     RigidBody m_body;
 
     // rope
-    RopeInstance* m_rope;
     glm::vec3 m_anchor;
     float m_ropeLength;
     bool m_attached;
