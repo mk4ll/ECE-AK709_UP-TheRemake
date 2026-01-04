@@ -245,7 +245,7 @@ void createContext() {
 	ropeInstance = new RopeInstance(Rope::DEFAULT_LENGTH);
 
 	vec3 peak = Terrain::get_terrain_peak();
-	vec3 chimneyOffset = vec3(-0.18f, 4.0f, -2.0f);
+	vec3 chimneyOffset = vec3(-0.18f, 5.0f, -2.0f);
 	vec3 chimneyPos = peak + chimneyOffset;
 
 	// balloon
@@ -255,33 +255,6 @@ void createContext() {
 	// anchor = chimney
 	balloonObj->setAnchor(chimneyPos);
 	balloonObj->attach(Rope::DEFAULT_LENGTH);
-
-
-	//
-	// Task 2.2: Creating a 2D quad to visualize the depthmap
-	// create geometry and vao for screen-space quad
-	/*
-	vector<vec3> quadVertices = {
-	  vec3(0.5, 0.5, -1.0),
-	  vec3(1.0, 0.5, -1.0),
-	  vec3(1.0, 1.0, -1.0),
-	  vec3(1.0, 1.0, -1.0),
-	  vec3(0.5, 1.0, -1.0),
-	  vec3(0.5, 0.5, -1.0)
-	};
-
-	vector<vec2> quadUVs = {
-	  vec2(0.0, 0.0),
-	  vec2(1.0, 0.0),
-	  vec2(1.0, 1.0),
-	  vec2(1.0, 1.0),
-	  vec2(0.0, 1.0),
-	  vec2(0.0, 0.0)
-	};
-
-	quad = new Drawable(quadVertices, quadUVs);
-	*/
-	//*/
 
 
 	// ---------------------------------------------------------------------------- //
@@ -518,7 +491,7 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	//balloon 
 	/*
-	vec3 chimneyOffset = vec3(-0.18, 4.0f, -2.0f);
+	vec3 chimneyOffset = vec3(-0.18, 5.0f, -2.0f);
 	vec3 chimneyPos = peak + chimneyOffset;
 
 	vec3 balloonPos = chimneyPos + vec3(0.0f, Rope::DEFAULT_LENGTH - 0.2f, 0.0f);
@@ -613,7 +586,22 @@ void mainLoop() {
 		balloonObj->applyForces();
 		balloonObj->update(dt);
 
+		vec3 peak = Terrain::get_terrain_peak();
+		vec3 chimneyOffset = vec3(-0.18f, 5.0f, -2.0f);
+		vec3 chimneyPos = peak + chimneyOffset;
+
 		glm::vec3 ropeStart = balloonObj->getRopeStart();
+
+		bool ropeHanging = balloonObj->isPopped();
+		ropeInstance->updateBezier(
+			chimneyPos,
+			ropeHanging
+			? chimneyPos - glm::vec3(0, Rope::DEFAULT_LENGTH, 0)
+			: balloonObj->getPosition(),
+			ropeHanging,
+			dt
+		);
+
 
 		ropeInstance->update(ropeStart, balloonObj->getPosition());
 

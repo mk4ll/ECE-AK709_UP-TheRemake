@@ -7,10 +7,13 @@
 #include "../physics/rigidBody.h"
 #include "../physics/forces.h"
 #include "ropeInstance.h"
+#include "../physics/collisionShapes.h"
+
 
 enum class BalloonState {
     Spawn,
-    Physics
+    Physics,
+    Popped
 };
 
 class Balloon {
@@ -56,6 +59,10 @@ private:
     bool m_attached;
 
     glm::vec3 m_freeRopeAnchor;
+
+    // rope physics
+    AABB m_houseAABB;
+    bool m_hasHouseCollision;
 
     // balloon properties
     float m_radius;

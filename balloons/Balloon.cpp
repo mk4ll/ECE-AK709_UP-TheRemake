@@ -1,6 +1,9 @@
 #include "balloon.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <physics/collision.h>
+#include <physics/collisionShapes.h>
+
 
 using namespace glm;
 
@@ -83,6 +86,12 @@ void Balloon::update(float dt) {
 
     // Physics phase
     m_body.integrate(dt);
+
+    Sphere s;
+    s.x = m_body.position;
+    s.r = m_radius;
+    
+    m_body.position = s.x;
 
     if (!m_attached) {
         // rope follows ballon

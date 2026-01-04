@@ -409,8 +409,9 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\balloons\ropeInstance.cpp" />
     <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\balloons\ropeInstance.h" />
     <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\rigidBody.h" />
-    <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\collisionDetection.cpp" />
-    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\collisionDetection.h" />
+    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\collisionShapes.h" />
+    <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\collision.cpp" />
+    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\collision.h" />
     <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\physicsWorld.cpp" />
     <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\physicsWorld.h" />
     <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\forces.h" />

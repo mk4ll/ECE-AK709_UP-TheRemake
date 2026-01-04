@@ -43,7 +43,7 @@
     <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\balloons\ropeInstance.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\collisionDetection.cpp">
+    <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\collision.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\physicsWorld.cpp">
@@ -105,7 +105,10 @@
     <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\rigidBody.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\collisionDetection.h">
+    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\collisionShapes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\collision.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\physics\physicsWorld.h">
