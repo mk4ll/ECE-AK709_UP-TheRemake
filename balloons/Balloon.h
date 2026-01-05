@@ -35,6 +35,11 @@ public:
     const glm::vec3& getPosition() const;
     float getRopeLength() const;
 
+    // add more balloons (collision detection)
+    float getRadius() const { return m_radius; }
+    RigidBody& getRigidBody() { return m_body; }
+    const RigidBody& getRigidBody() const { return m_body; }
+
     glm::vec3 getColor() const { return glm::vec3(0.85f, 0.10f, 0.10f); }
     VerletRope* m_verletRope;  // Verlet rope for when balloon pops
 

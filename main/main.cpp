@@ -28,6 +28,7 @@
 #include <balloons/ropeInstance.h>
 
 #include <physics/rigidBody.h>
+#include <physics/collision.h>
 #include <particles/particleSystem.h>
 
 using namespace std;
@@ -80,8 +81,11 @@ GLuint waterDuDvTexture;
 Drawable* balloon;
 BalloonMesh balloonMesh;
 Drawable* rope;
-Balloon* balloonObj;
-RopeInstance* ropeInstance;
+
+vector<Balloon*> balloons;
+vector<RopeInstance*> ropeInstances;
+const int NUM_BALLOONS = 50;					// AMOUNT OF BALLOONS
+
 ParticleSystem* popParticles = nullptr;
 
 //
@@ -242,6 +246,8 @@ void createContext() {
 	river = River::createFloodedCanyon(size, res, waterLevel, maxHeight);
 
 	// balloons
+	/*/
+	// ONE BALLOON:
 	ropeInstance = new RopeInstance(Rope::DEFAULT_LENGTH);
 
 	vec3 peak = Terrain::get_terrain_peak();
@@ -255,7 +261,34 @@ void createContext() {
 	// anchor = chimney
 	balloonObj->setAnchor(chimneyPos);
 	balloonObj->attach(Rope::DEFAULT_LENGTH);
+	/*/
 
+	//
+	// multiple balloons
+	vec3 peak = Terrain::get_terrain_peak();
+	vec3 chimneyOffset = vec3(-0.18f, 5.0f, -2.0f);
+	vec3 chimneyPos = peak + chimneyOffset;
+
+	balloon = new Drawable(balloonMesh.positions, balloonMesh.uvs);
+
+	// multiple balloons around the chimney
+	for (int i = 0; i < NUM_BALLOONS; ++i) {
+		Balloon* newBalloon = new Balloon(balloon);
+
+		// put them in a circle
+		float angle = (float)i / NUM_BALLOONS * 2.0f * 3.14159f;
+		float radius = 0.01f; // radius around chimneyPos
+		vec3 offset = vec3(cos(angle) * radius, 0.0f, sin(angle) * radius);
+
+		newBalloon->setAnchor(chimneyPos + offset);
+		newBalloon->attach(Rope::DEFAULT_LENGTH);
+
+		balloons.push_back(newBalloon);
+
+		// create corresponding rope 
+		RopeInstance* newRope = new RopeInstance(Rope::DEFAULT_LENGTH);
+		ropeInstances.push_back(newRope);
+	}
 
 	// ---------------------------------------------------------------------------- //
 	// -  Task 3.2 Create a depth framebuffer and a texture to store the depthmap - //
@@ -318,6 +351,16 @@ void createContext() {
 
 
 void free() {
+	// Delete balloons
+	for (auto* b : balloons) {
+		delete b;
+	}
+	balloons.clear();
+	// Delete ropes
+	for (auto* r : ropeInstances) {
+		delete r;
+	}
+	ropeInstances.clear();
 	// Delete Shader Programs
 	glDeleteProgram(shaderProgram);
 	glDeleteProgram(depthProgram);
@@ -481,40 +524,30 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	house->bind();
 	house->draw();
 
-	// balloons
-	//rope
+	// multiple balloons
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &mat4(1.0f)[0][0]);
-
 	uploadMaterial(ropeMaterial);
 	glUniform1i(useTextureLocation, 0);
 
-	if (balloonObj->isPopped() && balloonObj->getVerletRope()) {
-		// draw Verlet rope when popped
-		balloonObj->getVerletRope()->draw(modelMatrixLocation, rope);
+	// draw all ropes
+	for (size_t i = 0; i < balloons.size(); ++i) {
+		if (balloons[i]->isPopped() && balloons[i]->getVerletRope()) {
+			balloons[i]->getVerletRope()->draw(modelMatrixLocation, rope);
+		}
+		else {
+			ropeInstances[i]->draw(modelMatrixLocation);
+		}
 	}
-	else {
-		// draw normal Bezier rope when not popped
-		ropeInstance->draw(modelMatrixLocation);
-	}
 
-	//balloon 
-	/*
-	vec3 chimneyOffset = vec3(-0.18, 5.0f, -2.0f);
-	vec3 chimneyPos = peak + chimneyOffset;
-
-	vec3 balloonPos = chimneyPos + vec3(0.0f, Rope::DEFAULT_LENGTH - 0.2f, 0.0f);
-
-	mat4 balloonModelMatrix = translate(mat4(1.0f), balloonPos);
-	balloonModelMatrix = scale(balloonModelMatrix, vec3(0.5f));
-	
-	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &balloonModelMatrix[0][0]);
-	*/
-	// upload the material
+	// draw all balloons
 	uploadMaterial(redBalloon);
 	glUniform1i(useTextureLocation, 3);
 
-	balloonObj->draw(modelMatrixLocation);
+	for (size_t i = 0; i < balloons.size(); ++i) {
+		balloons[i]->draw(modelMatrixLocation);
+	}
 
+	// draw particles
 	if (popParticles) {
 		popParticles->draw(modelMatrixLocation, balloon);
 	}
@@ -536,6 +569,43 @@ void renderMiniMap() {
 }
 
 
+// collision detection: BALLOONS
+void handleBalloonCollisions() {
+	for (size_t i = 0; i < balloons.size(); ++i) {
+		if (balloons[i]->isPopped()) continue;
+
+		for (size_t j = i + 1; j < balloons.size(); ++j) {
+			if (balloons[j]->isPopped()) continue;
+
+			//sphere structs
+			Sphere s1, s2;
+			s1.x = balloons[i]->getPosition();
+			s1.r = balloons[i]->getRadius();
+
+			s2.x = balloons[j]->getPosition();
+			s2.r = balloons[j]->getRadius();
+
+			// check for collision
+			if (checkSphereSphereCollision(s1, s2)) {
+				// Παίρνουμε references στα rigid bodies
+				RigidBody& rb1 = balloons[i]->getRigidBody();
+				RigidBody& rb2 = balloons[j]->getRigidBody();
+
+				// collsiion handling
+				handleSphereSphereCollision(
+					s1, s2,
+					rb1.velocity, rb2.velocity,
+					rb1.mass, rb2.mass
+				);
+
+				// update positions
+				rb1.position = s1.x;
+				rb2.position = s2.x;
+			}
+		}
+	}
+}
+
 
 void mainLoop() {
 	static float lastTime = 0.0f;
@@ -547,7 +617,6 @@ void mainLoop() {
 	// Task 3.3
 	// Create the depth buffer
 	depth_pass(light_view, light_proj);
-
 
 	do {
 
@@ -566,49 +635,56 @@ void mainLoop() {
 		// Balloon Functions
 		float dt = glfwGetTime() - lastTime;
 		lastTime = glfwGetTime();
+		if (!balloons.empty()) {
+			if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
+				balloons[0]->release();
+			}
 
-		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
-			balloonObj->inflate();
-		}
+			if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+				if (!balloons[0]->isPopped()) {
+					balloons[0]->pop();
+					popParticles = new ParticleSystem(balloons[0]->getPosition(), balloons[0]->getColor());
+				}
+			}
 
-		if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
-			balloonObj->release();
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
-			if (!balloonObj->isPopped()) {
-				balloonObj->pop();
-				popParticles = new ParticleSystem(balloonObj->getPosition(), balloonObj->getColor());
+			if (popParticles) {
+				popParticles->update(dt);
+				if (!popParticles->isAlive()) {
+					delete popParticles;
+					popParticles = nullptr;
+				}
 			}
 		}
-
-		if (popParticles) {
-			popParticles->update(dt);
-			if (!popParticles->isAlive()) {
-				delete popParticles;
-				popParticles = nullptr;
-			}
-		}
-
-		balloonObj->applyForces();
-		balloonObj->update(dt);
-
+		// update all balloons
 		vec3 peak = Terrain::get_terrain_peak();
 
-		glm::vec3 ropeStart = balloonObj->getRopeStart();
+		for (size_t i = 0; i < balloons.size(); ++i) {
+			balloons[i]->applyForces();
+			balloons[i]->update(dt);
 
-		vec3 houseMin = peak + vec3(-10.0f, 0.0f, -10.0f);
-		vec3 houseMax = peak + vec3(10.0f, 10.0f, 10.0f);
-		balloonObj->setHouseBounds(houseMin, houseMax);
-
-		if (!balloonObj->isPopped()) {
-			vec3 chimneyOffset = vec3(-0.18f, 5.0f, -2.0f);
-			vec3 chimneyPos = peak + chimneyOffset;
-
-			ropeInstance->updateBezier(chimneyPos, balloonObj->getPosition(), false, dt);
+			vec3 houseMin = peak + vec3(-10.0f, 0.0f, -10.0f);
+			vec3 houseMax = peak + vec3(10.0f, 10.0f, 10.0f);
+			balloons[i]->setHouseBounds(houseMin, houseMax);
 		}
 
-		ropeInstance->update(ropeStart, balloonObj->getPosition());
+		handleBalloonCollisions();
+
+		// update ropes
+		for (size_t i = 0; i < balloons.size(); ++i) {
+			if (!balloons[i]->isPopped()) {
+				float angle = (float)i / NUM_BALLOONS * 2.0f * 3.14159f;
+				float radius = 1.5f;
+				vec3 offset = vec3(cos(angle) * radius, 0.0f, sin(angle) * radius);
+				vec3 anchorPos = peak + vec3(-0.18f, 5.0f, -2.0f) + offset;
+
+				ropeInstances[i]->updateBezier(anchorPos,
+					balloons[i]->getPosition(),
+					false, dt);
+			}
+
+			ropeInstances[i]->update(balloons[i]->getRopeStart(),
+				balloons[i]->getPosition());
+		}
 
 		//
 
@@ -624,8 +700,6 @@ void mainLoop() {
 		}
 		//*/
 
-		// Task 2.2:
-		//renderMiniMap();
 
 
 		glfwSwapBuffers(window);
