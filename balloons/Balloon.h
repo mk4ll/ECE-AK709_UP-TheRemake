@@ -10,6 +10,8 @@
 #include "../physics/collisionShapes.h"
 #include "verletRope.h"
 
+#include "balloonTypes.h" 
+
 
 enum class BalloonState {
     Spawn,
@@ -20,9 +22,10 @@ enum class BalloonState {
 class Balloon {
 public:
     Balloon(Drawable* mesh);
+    Balloon(Drawable* mesh, BalloonType type);
 
     // setup
-    void setAnchor(const glm::vec3& anchor);
+    void setAnchor(const vec3& anchor);
     void attach(float ropeLength);
 
     // simulation
@@ -32,20 +35,24 @@ public:
     // balloon-rope relation
     bool isAttached() const;
     bool isRopeAttached() const { return m_attached; }
-    const glm::vec3& getAnchor() const;
-    const glm::vec3& getPosition() const;
+    const vec3& getAnchor() const;
+    const vec3& getPosition() const;
     float getRopeLength() const;
+
+    // balloon types
+    BalloonType getType() const { return m_type; }
+    vec3 getColor() const { return getBalloonColor(m_type); }
+    float getGlitterTime() const { return m_glitterTime; }
 
     // add more balloons (collision detection)
     float getRadius() const { return m_radius; }
     RigidBody& getRigidBody() { return m_body; }
     const RigidBody& getRigidBody() const { return m_body; }
 
-    glm::vec3 getColor() const { return glm::vec3(0.85f, 0.10f, 0.10f); }
     VerletRope* m_verletRope;  // Verlet rope for when balloon pops
 
-    const glm::vec3& getFreeRopeAnchor() const;
-    glm::vec3 getRopeStart() const;
+    const vec3& getFreeRopeAnchor() const;
+    vec3 getRopeStart() const;
 
     bool isPopped() const;
 
@@ -58,11 +65,11 @@ public:
     void inflate();
 
     // House collision bounds
-    glm::vec3 m_houseMin;
-    glm::vec3 m_houseMax;
+    vec3 m_houseMin;
+    vec3 m_houseMax;
 
     //get house bounds
-    void setHouseBounds(const glm::vec3& min, const glm::vec3& max);
+    void setHouseBounds(const vec3& min, const vec3& max);
     // verlet rope for rendering
     VerletRope* getVerletRope() const;
 
@@ -73,11 +80,11 @@ private:
     RigidBody m_body;
 
     // rope
-    glm::vec3 m_anchor;
+    vec3 m_anchor;
     float m_ropeLength;
     bool m_attached;
 
-    glm::vec3 m_freeRopeAnchor;
+    vec3 m_freeRopeAnchor;
 
     // rope physics
     AABB m_houseAABB;
@@ -92,6 +99,10 @@ private:
 
     // pop flag
     bool m_popped;
+
+    // balloon types and effects
+    BalloonType m_type;
+    float m_glitterTime;
     
 };
 

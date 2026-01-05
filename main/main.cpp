@@ -25,6 +25,7 @@
 #include <balloons/balloonMesh.h>
 #include <balloons/rope.h>
 #include <balloons/balloon.h>
+#include <balloons/balloonTypes.h>
 #include <balloons/ropeInstance.h>
 
 #include <physics/rigidBody.h>
@@ -46,7 +47,6 @@ void free();
 
 #define SHADOW_WIDTH 1024
 #define SHADOW_HEIGHT 1024
-
 
 
 
@@ -131,15 +131,6 @@ const Material ropeMaterial{
 	glm::vec4(0.05f, 0.05f, 0.05f, 1.0f),  // Ks (specular) - ~0
 	4.0f                                   // Ns - low shininess
 };
-
-const Material redBalloon{
-	glm::vec4(0.12f, 0.02f, 0.02f, 1.0f),  // Ka – red ambient
-	glm::vec4(0.85f, 0.10f, 0.10f, 1.0f),  // Kd – red diffuse
-	glm::vec4(0.35f, 0.35f, 0.35f, 1.0f),  // Ks – latex like
-	48.0f                                  // Ns
-};
-
-
 
 
 // NOTE: Since the Light and Material struct are used in the shader programs as well 
@@ -271,9 +262,10 @@ void createContext() {
 
 	balloon = new Drawable(balloonMesh.positions, balloonMesh.uvs);
 
-	// multiple balloons around the chimney
+	// multiple balloons around the center of the chimney
 	for (int i = 0; i < NUM_BALLOONS; ++i) {
-		Balloon* newBalloon = new Balloon(balloon);
+		BalloonType type = getBalloonTypeByIndex(i);
+		Balloon* newBalloon = new Balloon(balloon, type);
 
 		// put them in a circle
 		float angle = (float)i / NUM_BALLOONS * 2.0f * 3.14159f;
@@ -288,6 +280,8 @@ void createContext() {
 		// create corresponding rope 
 		RopeInstance* newRope = new RopeInstance(Rope::DEFAULT_LENGTH);
 		ropeInstances.push_back(newRope);
+		// debug info
+		printf("Created balloon %d: %s\n", i, getBalloonTypeName(type));
 	}
 
 	// ---------------------------------------------------------------------------- //
@@ -550,12 +544,33 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	}
 
 	// draw all balloons
-	uploadMaterial(redBalloon);
-	glUniform1i(useTextureLocation, 3);
-
 	for (size_t i = 0; i < balloons.size(); ++i) {
+		BalloonType type = balloons[i]->getType();
+
+		Material balloonMat = getBalloonMaterial(type);
+		uploadMaterial(balloonMat);
+
+		//shader flag
+		int shaderFlag = getBalloonShaderFlag(type);
+		glUniform1i(useTextureLocation, shaderFlag);
+
+		// special rendering for transparent balloons
+		if (type == BalloonType::TRANSPARENT) {
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glDepthMask(GL_FALSE);
+		}
+
 		balloons[i]->draw(modelMatrixLocation);
+
+		// reset transparency settings
+		if (type == BalloonType::TRANSPARENT) {
+			glDepthMask(GL_TRUE);
+		}
 	}
+
+	// reset for particles
+	glUniform1i(useTextureLocation, 3);
 
 	// draw particles
 	if (popParticles) {
@@ -828,7 +843,7 @@ void initialize() {
 		vec4{ 1, 1, 1, 1 },
 		vec4{ 1, 1, 1, 1 },
 		vec4{ 1, 1, 1, 1 },
-		vec3{ 10, peak.y + 20, 20 } // over the house and over the peak
+		vec3{0, peak.y + 30, peak.z + 25} // over the house and over the peak
 	);
 
 }

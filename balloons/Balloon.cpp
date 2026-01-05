@@ -1,4 +1,5 @@
 #include "balloon.h"
+#include "balloonTypes.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <physics/collision.h>
@@ -15,7 +16,27 @@ Balloon::Balloon(Drawable* mesh)
     m_state(BalloonState::Spawn),
     m_spawnTimer(0.0f),
     m_popped(false),
-    m_verletRope(nullptr)
+    m_verletRope(nullptr),
+    m_type(BalloonType::CLASSIC),
+    m_glitterTime(0.0f)
+{
+    m_body.position = vec3(0.0f, 0.0f, 0.0f);
+    m_body.velocity = vec3(0.0f);
+    m_body.mass = 1.2f;
+}
+
+// Constructor with type
+Balloon::Balloon(Drawable* mesh, BalloonType type)
+    : m_mesh(mesh),
+    m_ropeLength(5.0f),
+    m_attached(true),
+    m_radius(0.5f),
+    m_state(BalloonState::Spawn),
+    m_spawnTimer(0.0f),
+    m_popped(false),
+    m_verletRope(nullptr),
+    m_type(type),
+    m_glitterTime(0.0f)
 {
     m_body.position = vec3(0.0f, 0.0f, 0.0f);
     m_body.velocity = vec3(0.0f);

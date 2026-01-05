@@ -13,11 +13,13 @@ uniform sampler2D diffuseColorSampler;
 uniform sampler2D specularColorSampler;
 uniform sampler2D dudvSampler;
 
-uniform int useTexture; // 0-> material, 1->house, 2-> water
+uniform int useTexture; // 0-> terrain, 1->house, 
+                        // 2-> water, 3->classic, 
+                        // 4->glitter, 5->metallic, 
+                        // 6->neon, 7->transparent, 
+                        // 8->3D texture
 
-
-// task 1:
-//make river flow
+// task 1: make river flow
 uniform float time;
 
 // light properties
@@ -43,55 +45,100 @@ out vec4 fragmentColor;
 
 void phong(float visibility);
 float ShadowCalculation(vec4 fragPositionLightspace);
-
 vec3 computeWorldNormal();
 
-void main() {   
-    
-    // Task 4.3
-    float shadow = ShadowCalculation(vertex_position_lightspace);
+//
+// balloon effects
 
-    float visibility = 1.0f - shadow;
+// glitter - Procedural sparkles
+float glitterEffect(vec3 worldPos, float time) {
+    // Multi-scale noise για realistic sparkles
+    vec3 p1 = worldPos * 15.0;
+    vec3 p2 = worldPos * 25.0;
+    
+    // Hash function για pseudo-random sparkles
+    float n1 = fract(sin(dot(p1, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
+    float n2 = fract(sin(dot(p2, vec3(63.7264, 10.873, 623.6))) * 43758.5453);
+    
+    // Animated sparkles που twinkle
+    float sparkle1 = step(0.985, n1 + 0.015 * sin(time * 8.0 + n1 * 100.0));
+    float sparkle2 = step(0.99, n2 + 0.01 * sin(time * 12.0 + n2 * 150.0));
+    
+    return max(sparkle1, sparkle2 * 0.7);
+}
+
+// metallic reflection
+vec3 metallicReflection(vec3 normal, vec3 viewDir) {
+    // Calculate reflection vector
+    vec3 reflectDir = reflect(-viewDir, normal);
+    
+    // Fake sky/environment gradient
+    float skyFactor = reflectDir.y * 0.5 + 0.5;
+    vec3 skyColor = mix(vec3(0.4, 0.5, 0.7), vec3(0.8, 0.9, 1.0), skyFactor);
+    
+    // Fake ground reflection
+    vec3 groundColor = vec3(0.3, 0.25, 0.2);
+    vec3 envColor = mix(groundColor, skyColor, smoothstep(-0.2, 0.5, reflectDir.y));
+    
+    return envColor;
+}
+
+// neon glow effect
+vec3 neonGlow(vec3 baseColor, vec3 normal, vec3 viewDir) {
+    // fresnel για rim lighting effect
+    float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 3.5);
+    
+    // pulsating glow
+    float pulse = 0.8 + 0.2 * sin(time * 3.0);
+    
+    // emissive glow color
+    vec3 glowColor = baseColor * 2.5 * pulse;
+    
+    return mix(baseColor, glowColor, fresnel * 0.9);
+}
+
+// 3D (procedural) Texture - bumpy surface
+vec3 proceduralPattern(vec3 worldPos, vec3 baseColor) {
+    // vertical stripes
+    float stripes = sin(worldPos.y * 18.0) * 0.5 + 0.5;
+    stripes = smoothstep(0.3, 0.7, stripes);
+    
+    // circular bumps
+    vec3 p = fract(worldPos * 5.0) - 0.5;
+    float bumps = length(p);
+    bumps = smoothstep(0.25, 0.45, bumps);
+    
+    // combine
+    float pattern = mix(stripes, bumps, 0.5);
+    
+    // apply to base color
+    return baseColor * (0.6 + pattern * 0.8);
+}
+
+
+void main() {   
+    // Shadow calculation
+    float shadow = ShadowCalculation(vertex_position_lightspace);
+    float visibility = 1.0 - shadow;
 
     phong(visibility);
 }
 
 
-
 float ShadowCalculation(vec4 fragPositionLightspace) {
-    // Given the position of a fragment in lightspace coordinates
-    // We sample the depth buffer to see whether or not the fragment is shadowed
-    
     float shadow;
-
-    // Task 4.3
     
-    // Perspective devide to bring coordinates in range[-1, 1]
+    // Perspective divide
     vec3 projCoords = vertex_position_lightspace.xyz / vertex_position_lightspace.w;
-
-    // Since the depth map values are in range[0, 1]
     projCoords = 0.5 * projCoords + 0.5;
 
-    // Sampling the closest point in this position from the depth map
-    // REMINDER: Since we are in lightspace coordinates,
-    //           the z parameter is the depth from the camera
     float closestDepth = texture(shadowMapSampler, projCoords.xy).r;
-
-    // Then we get the depth of the current fragment
     float currentDepth = projCoords.z;
 
-    // If the current fragment is farther than the closest point, the fragment is shadowed
-    shadow = (currentDepth > closestDepth) ? 1.0 : 0.0;
-  
-
-    // Task 4.4
-    // Correcting the quantization problem
+    // Bias to fix shadow acne
     float bias = 0.005;
-    shadow = (currentDepth > closestDepth + bias) ? 1.0 : 0.0;
-        
-
-    // Task 4.6 Make the shadow edges more realistic
-
+    
+    // PCF for soft shadows
     shadow = 0.0;
     vec2 depthMap_dimensions = textureSize(shadowMapSampler, 0);
     vec2 texelSize = 1.0 / depthMap_dimensions;
@@ -103,13 +150,10 @@ float ShadowCalculation(vec4 fragPositionLightspace) {
     }
     shadow /= 9.0;
 
-
-    // Task 4.5
-
     if(projCoords.z > 1)
         shadow = 0.0;
+        
     return shadow;
-
 }
 
 
@@ -121,11 +165,12 @@ void phong(float visibility) {
     vec4 _Ka = mtl.Ka;
     float _Ns = mtl.Ns;
     
-    // model diffuse intensity (Id)
+    // Vectors for lighting
     vec4 N = normalize(vertex_normal_cameraspace);
     vec4 L = normalize(light_position_cameraspace - vertex_position_cameraspace);
+    vec4 V = normalize(-vertex_position_cameraspace); // View direction
 
-    // use texture for HOUSE
+    // house texture
     if (useTexture == 1) {
         _Ks = vec4(texture(specularColorSampler, vertex_UV).rgb, 1.0);
         _Kd = vec4(texture(diffuseColorSampler, vertex_UV).rgb, 1.0);
@@ -133,19 +178,15 @@ void phong(float visibility) {
         _Ns = 10;
     }
 
-    // for WATER
+    // water
     if (useTexture == 2) {
-        // DuDv animation
         vec2 dudvUV = vec2(vertex_UV.x, vertex_UV.y + time * 0.05);
-
         vec2 distortion = texture(dudvSampler, dudvUV).rg;
         distortion = distortion * 2.0 - 1.0;
         distortion *= 0.08;
 
-        //micro-noise to be more realistic
         vec2 noiseUV = vertex_UV * 3.0;
         noiseUV.y += time * 0.015;
-
         vec2 noise = texture(dudvSampler, noiseUV).rg;
         noise = noise * 2.0 - 1.0;
         noise *= 0.015;
@@ -153,14 +194,12 @@ void phong(float visibility) {
         vec2 totalDistortion = distortion + noise;
         vec2 distortedUV = vertex_UV + totalDistortion;
         vec3 baseColor = texture(diffuseColorSampler, distortedUV).rgb;
-        // override normal
+        
         N = normalize(vec4(totalDistortion.x, 1.0, totalDistortion.y, 0.0));
 
-        // Fresnel
-        vec4 V = normalize(-vertex_position_cameraspace);
         float fresnel = pow(1.0 - max(dot(V, N), 0.0), 3.0);
 
-        vec3 deepWater    = vec3(0.0, 0.18, 0.35);
+        vec3 deepWater = vec3(0.0, 0.18, 0.35);
         vec3 shallowWater = vec3(0.2, 0.5, 0.7);
         vec3 waterColor = mix(deepWater, shallowWater, fresnel);
 
@@ -168,43 +207,99 @@ void phong(float visibility) {
         _Ka = vec4(waterColor * 0.3, 0.8);
         _Ks = vec4(vec3(1.0), 1.0);
         _Ns = mix(40.0, 160.0, fresnel);
-   
     }
 
-    if (useTexture == 3){
-        N = vec4(computeWorldNormal(), 0.0f);
+    // classic BALLOON
+    if (useTexture == 3) {
+        N = vec4(computeWorldNormal(), 0.0);
     }
 
-    // model ambient intensity (Ia)
+    // Standard Phong calculation
     vec4 Ia = light.La * _Ka;
-
-    // model diffuse intensity (Id)
+    
     float cosTheta = clamp(dot(N, L), 0, 1);
     vec4 Id = light.Ld * _Kd * cosTheta;
-
-    // model specular intensity (Is)
+    
     vec4 R = reflect(-L, N);
     vec4 E = normalize(vec4(0, 0, 0, 1) - vertex_position_cameraspace);
     float cosAlpha = clamp(dot(E, R), 0, 1);
     float specular_factor = pow(cosAlpha, _Ns);
     vec4 Is = light.Ls * _Ks * specular_factor;
 
-    // here we would normally model the light attenuation effect
-    // but since this is a directional light source that is infinitely far away
-    // attenuating the light intensity does not make sense
-
-    // final fragment color
+    // Base color
     fragmentColor = vec4(
         Ia + 
-        Id * visibility +   // Task 4.3 Use visibility
-        Is * visibility);
+        Id * visibility + 
+        Is * visibility
+    );
+
+    // balloom effects
     
-    // lowering the opacity of the water
-    if (useTexture == 2){
+    // glitter BALLOON (useTexture == 4)
+    if (useTexture == 4) {
+        float glitter = glitterEffect(frag_position_world, time);
+        // Προσθήκη sparkles
+        fragmentColor.rgb += vec3(glitter * 1.2);
+        // Extra shine στα sparkles
+        if (glitter > 0.5) {
+            fragmentColor.rgb += vec3(0.3, 0.3, 0.4) * glitter;
+        }
+    }
+    
+    // metallic BALLOON (useTexture == 5)
+    else if (useTexture == 5) {
+        vec3 worldNormal = computeWorldNormal();
+        vec3 viewDir = normalize(-vertex_position_cameraspace.xyz);
+        vec3 metallic = metallicReflection(worldNormal, viewDir);
+        
+        // Mix base color and metallic reflection
+        fragmentColor.rgb = mix(fragmentColor.rgb, metallic, 0.7);
+        
+        // extra specular for chrome effect
+        fragmentColor.rgb += vec3(0.2) * specular_factor;
+    }
+    
+    // neon BALLOON (useTexture == 6)
+    else if (useTexture == 6) {
+        vec3 worldNormal = computeWorldNormal();
+        vec3 viewDir = normalize(-vertex_position_cameraspace.xyz);
+        
+        // neon glow effect
+        vec3 neonColor = neonGlow(_Kd.rgb, worldNormal, viewDir);
+        fragmentColor.rgb = neonColor;
+        
+        // emissive boost - glows even in the dark
+        fragmentColor.rgb += _Kd.rgb * 0.4;
+    }
+    
+    // transparent BALLOON (useTexture == 7)
+    else if (useTexture == 7) {
+        // glass-like effect
+        vec3 worldNormal = computeWorldNormal();
+        vec3 viewDir = normalize(-vertex_position_cameraspace.xyz);
+        // fresnel effect for glass edges
+        float fresnel = pow(1.0 - max(dot(worldNormal, viewDir), 0.0), 2.0);
+        
+        // transparency using rim-lighting
+        fragmentColor.a = 0.25 + fresnel * 0.3;
+        fragmentColor.rgb = mix(fragmentColor.rgb, vec3(1.0), fresnel * 0.4);
+    }
+    
+    // 3D textured BALLOON (useTexture == 8)
+    else if (useTexture == 8) {
+        vec3 patternColor = proceduralPattern(frag_position_world, _Kd.rgb);
+        fragmentColor.rgb = mix(fragmentColor.rgb, patternColor, 0.8);
+        // bump-like shading
+        vec3 p = fract(frag_position_world * 5.0) - 0.5;
+        float bump = length(p);
+        fragmentColor.rgb *= (0.9 + bump * 0.2);
+    }
+
+    // water opacity
+    if (useTexture == 2) {
         fragmentColor.a = 0.8; 
     }
 }
-
 
 vec3 computeWorldNormal() {
     vec3 dx = dFdx(frag_position_world);
