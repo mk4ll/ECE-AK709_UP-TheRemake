@@ -28,11 +28,13 @@ public:
     void applyForces();
     void update(float dt);
 
-    // baloon-rope relation
+    // balloon-rope relation
     bool isAttached() const;
     const glm::vec3& getAnchor() const;
     const glm::vec3& getPosition() const;
     float getRopeLength() const;
+
+    glm::vec3 getColor() const { return glm::vec3(0.85f, 0.10f, 0.10f); }
 
     const glm::vec3& getFreeRopeAnchor() const;
     glm::vec3 getRopeStart() const;

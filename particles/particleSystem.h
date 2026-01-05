@@ -5,17 +5,19 @@
 #include <common/model.h>
 #include "particle.h"
 
+using namespace glm;
+
 class ParticleSystem {
 public:
-    ParticleSystem(const glm::vec3& origin);
+    ParticleSystem(const vec3& origin, vec3& color);
 
-    void spawnExplosion(const glm::vec3& pos, int count);
+    void spawnExplosion(const vec3& pos, int count);
     void update(float dt);
-    void draw(GLuint modelMatrixLocation) const;
+    void draw(GLuint modelMatrixLocation, Drawable* mesh) const;
 
     bool isAlive() const;
 
 private:
     std::vector<Particle> m_particles;
-    Drawable* m_mesh;
+    vec3 m_color; // store the color
 };

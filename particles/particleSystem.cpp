@@ -2,52 +2,82 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstdlib>
+#include <cmath>
 
 using namespace glm;
 
+// This creates uniform distribution on a sphere
 static vec3 randomDir() {
-    vec3 v(
-        (rand() % 200 - 100) / 100.0f,
-        (rand() % 200 - 100) / 100.0f,
-        (rand() % 200 - 100) / 100.0f
+    // Spherical coordinates for uniform distribution
+    float theta = ((float)rand() / RAND_MAX) * 2.0f * 3.14159265f;  // [0, 2ð]
+    float phi = ((float)rand() / RAND_MAX) * 3.14159265f;           // [0, ð]
+
+    return vec3(sin(phi) * cos(theta),
+        sin(phi) * sin(theta),
+        cos(phi)
     );
-    return normalize(v);
 }
 
-ParticleSystem::ParticleSystem(const vec3& origin) {
-    const int COUNT = 40;
-    const float SPEED = 6.0f;
+// particles at origin colored
+ParticleSystem::ParticleSystem(const vec3& origin, vec3& color)
+    : m_color(color)  // Store the color
+{
+    const int COUNT = 100;        // number of particles
+    const float SPEED = 6.0f;    // v0 for particles
 
+    // COUNT particles
     for (int i = 0; i < COUNT; ++i) {
-        vec3 vel = randomDir() * SPEED;
-        m_particles.emplace_back(origin, vel);
+        vec3 vel = randomDir() * SPEED;  // random direction * speed
+
+        // Create particle with origin position, velocity, and color
+        m_particles.emplace_back(origin, vel, color);
     }
 }
 
+// update particles
 void ParticleSystem::update(float dt) {
     for (auto& p : m_particles) {
+        // skip dead particles
         if (p.life <= 0.0f) continue;
-
-        p.velocity += vec3(0, -9.8f, 0) * dt; // gravity
+        //gravity
+        p.velocity += vec3(0, -9.8f, 0) * dt;
+        // update position
         p.position += p.velocity * dt;
+        // decrease life
         p.life -= dt;
     }
 }
 
+// check if any particles are still alive
 bool ParticleSystem::isAlive() const {
-    for (const auto& p : m_particles)
+    for (const auto& p : m_particles) {
         if (p.life > 0.0f) return true;
+    }
     return false;
 }
 
-void ParticleSystem::draw(GLuint modelMatrixLocation) const {
+// draw alive particles
+void ParticleSystem::draw(GLuint modelMatrixLocation, Drawable* mesh) const {
+    if (!mesh) return;
+
+    mesh->bind();
+
     for (const auto& p : m_particles) {
+        // skip dead particles
         if (p.life <= 0.0f) continue;
 
-        mat4 M(1.0f);
-        M = translate(M, p.position);
-        M = scale(M, vec3(0.05f));
+        // alpha for fade out effect
+        float alpha = p.life / p.initialLife;  // init: 1.0
+                                               // at death: 0.0
 
+        // particle model Matrix
+        mat4 M(1.0f);
+        M = translate(M, p.position);     // translate to particle pos
+        M = scale(M, vec3(0.01f));        // scale down
+
+        // upload and draw
         glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &M[0][0]);
+
+        mesh->draw();
     }
 }

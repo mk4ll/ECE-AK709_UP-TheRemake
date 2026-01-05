@@ -508,7 +508,7 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	balloonObj->draw(modelMatrixLocation);
 
 	if (popParticles) {
-		popParticles->draw(modelMatrixLocation);
+		popParticles->draw(modelMatrixLocation, balloon);
 	}
 }
 
@@ -570,7 +570,7 @@ void mainLoop() {
 		if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
 			if (!balloonObj->isPopped()) {
 				balloonObj->pop();
-				popParticles = new ParticleSystem(balloonObj->getPosition());
+				popParticles = new ParticleSystem(balloonObj->getPosition(), balloonObj->getColor());
 			}
 		}
 
