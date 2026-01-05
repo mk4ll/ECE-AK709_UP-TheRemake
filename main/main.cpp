@@ -487,7 +487,15 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	uploadMaterial(ropeMaterial);
 	glUniform1i(useTextureLocation, 0);
-	ropeInstance->draw(modelMatrixLocation);
+
+	if (balloonObj->isPopped() && balloonObj->getVerletRope()) {
+		// draw Verlet rope when popped
+		balloonObj->getVerletRope()->draw(modelMatrixLocation, rope);
+	}
+	else {
+		// draw normal Bezier rope when not popped
+		ropeInstance->draw(modelMatrixLocation);
+	}
 
 	//balloon 
 	/*
@@ -582,26 +590,23 @@ void mainLoop() {
 			}
 		}
 
-
 		balloonObj->applyForces();
 		balloonObj->update(dt);
 
 		vec3 peak = Terrain::get_terrain_peak();
-		vec3 chimneyOffset = vec3(-0.18f, 5.0f, -2.0f);
-		vec3 chimneyPos = peak + chimneyOffset;
 
 		glm::vec3 ropeStart = balloonObj->getRopeStart();
 
-		bool ropeHanging = balloonObj->isPopped();
-		ropeInstance->updateBezier(
-			chimneyPos,
-			ropeHanging
-			? chimneyPos - glm::vec3(0, Rope::DEFAULT_LENGTH, 0)
-			: balloonObj->getPosition(),
-			ropeHanging,
-			dt
-		);
+		vec3 houseMin = peak + vec3(-10.0f, 0.0f, -10.0f);
+		vec3 houseMax = peak + vec3(10.0f, 10.0f, 10.0f);
+		balloonObj->setHouseBounds(houseMin, houseMax);
 
+		if (!balloonObj->isPopped()) {
+			vec3 chimneyOffset = vec3(-0.18f, 5.0f, -2.0f);
+			vec3 chimneyPos = peak + chimneyOffset;
+
+			ropeInstance->updateBezier(chimneyPos, balloonObj->getPosition(), false, dt);
+		}
 
 		ropeInstance->update(ropeStart, balloonObj->getPosition());
 

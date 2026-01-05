@@ -14,7 +14,8 @@ Balloon::Balloon(Drawable* mesh)
     m_radius(0.5f),
     m_state(BalloonState::Spawn),
     m_spawnTimer(0.0f),
-    m_popped(false)
+    m_popped(false),
+    m_verletRope(nullptr)
 {
     m_body.position = vec3(0.0f, 0.0f, 0.0f);
     m_body.velocity = vec3(0.0f);
@@ -59,15 +60,7 @@ void Balloon::applyForces() {
 
         if (dist > m_ropeLength) {
             m_body.applyForce(
-                Forces::ropeSpringDamper(
-                    m_body.position,
-                    m_body.velocity,
-                    m_anchor,
-                    m_ropeLength,
-                    25.0f,
-                    8.0f
-                )
-            );
+                Forces::ropeSpringDamper(m_body.position, m_body.velocity, m_anchor, m_ropeLength, 25.0f, 8.0f));
         }
     }
 }
@@ -84,6 +77,13 @@ void Balloon::update(float dt) {
         return;
     }
 
+    // if popped: update Verlet rope instead of balloon physics
+    if (m_popped && m_verletRope) {
+        m_verletRope->update(dt, 5); // 5 constraint iterations
+        m_verletRope->handleHouseCollision(m_houseMin, m_houseMax);
+        return;
+    }
+
     // Physics phase
     m_body.integrate(dt);
 
@@ -93,8 +93,9 @@ void Balloon::update(float dt) {
     
     m_body.position = s.x;
 
+    // if released: rope follows the ballon
     if (!m_attached) {
-        // rope follows ballon
+
         m_freeRopeAnchor =
             m_body.position - glm::vec3(0.0f, m_ropeLength, 0.0f);
     }
@@ -149,9 +150,24 @@ void Balloon::pop() {
     if (m_popped) return;
     m_popped = true;
     m_attached = true;
+
+    // Verlet rope from anchor to current balloon position
+    int segments = 20; // number of rope segments for simulation
+    m_verletRope = new VerletRope(m_anchor, m_body.position, segments);
 }
 
 void Balloon::inflate() {
     printf("Balloon inflating... ");
     return;
+}
+
+// get house bounds
+void Balloon::setHouseBounds(const glm::vec3& min, const glm::vec3& max) {
+    m_houseMin = min;
+    m_houseMax = max;
+}
+
+// get Verlet rope pointer
+VerletRope* Balloon::getVerletRope() const {
+    return m_verletRope;
 }

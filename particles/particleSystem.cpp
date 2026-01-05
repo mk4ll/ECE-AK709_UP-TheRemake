@@ -67,8 +67,8 @@ void ParticleSystem::draw(GLuint modelMatrixLocation, Drawable* mesh) const {
         if (p.life <= 0.0f) continue;
 
         // alpha for fade out effect
-        float alpha = p.life / p.initialLife;  // init: 1.0
-                                               // at death: 0.0
+        float alpha = p.life / p.initialLife;  // init: 1.0f
+                                               // at death: 0.0f
 
         // particle model Matrix
         mat4 M(1.0f);

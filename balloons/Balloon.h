@@ -8,6 +8,7 @@
 #include "../physics/forces.h"
 #include "ropeInstance.h"
 #include "../physics/collisionShapes.h"
+#include "verletRope.h"
 
 
 enum class BalloonState {
@@ -35,6 +36,7 @@ public:
     float getRopeLength() const;
 
     glm::vec3 getColor() const { return glm::vec3(0.85f, 0.10f, 0.10f); }
+    VerletRope* m_verletRope;  // Verlet rope for when balloon pops
 
     const glm::vec3& getFreeRopeAnchor() const;
     glm::vec3 getRopeStart() const;
@@ -48,6 +50,15 @@ public:
     void release();
     void pop();
     void inflate();
+
+    // House collision bounds
+    glm::vec3 m_houseMin;
+    glm::vec3 m_houseMax;
+
+    //get house bounds
+    void setHouseBounds(const glm::vec3& min, const glm::vec3& max);
+    // verlet rope for rendering
+    VerletRope* getVerletRope() const;
 
 private:
     Drawable* m_mesh;
@@ -73,8 +84,9 @@ private:
     BalloonState m_state;
     float m_spawnTimer;
 
-    // pop method
+    // pop flag
     bool m_popped;
+    
 };
 
 
