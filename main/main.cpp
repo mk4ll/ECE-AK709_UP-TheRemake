@@ -411,6 +411,7 @@ void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	// balloons
 	for (size_t i = 0; i < balloons.size(); ++i) {
+		if (balloons[i]->isPopped()) continue;
 		mat4 balloonM = translate(mat4(1.0f), balloons[i]->getPosition());
 		balloonM = scale(balloonM, vec3(balloons[i]->getRadius()));
 		glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &balloonM[0][0]);
@@ -644,18 +645,43 @@ void mainLoop() {
 		// Balloon Functions
 		float dt = glfwGetTime() - lastTime;
 		lastTime = glfwGetTime();
-		if (!balloons.empty()) {
-			if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
-				balloons[0]->release();
-			}
+		// static vars to store key-pressed values
+		static bool keyN_wasPressed = false;
+		static bool keyM_wasPressed = false;
 
-			if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
-				if (!balloons[0]->isPopped()) {
-					balloons[0]->pop();
-					popParticles = new ParticleSystem(balloons[0]->getPosition(), balloons[0]->getColor());
+		if (!balloons.empty()) {
+			// release
+			bool keyN_isPressed = (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS);
+			if (keyN_isPressed && !keyN_wasPressed) {
+				// first available balloon to be released
+				for (size_t i = 0; i < balloons.size(); ++i) {
+					if (balloons[i]->isRopeAttached() && !balloons[i]->isPopped()) {
+						balloons[i]->release();
+						printf("Balloon %zu was RELEASED!\n", i);
+						break;
+					}
 				}
 			}
+			keyN_wasPressed = keyN_isPressed; // save state
 
+			// pop
+			bool keyM_isPressed = (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS);
+			if (keyM_isPressed && !keyM_wasPressed) {
+				// first available balloon to be popped
+				for (size_t i = 0; i < balloons.size(); ++i) {
+					if (!balloons[i]->isPopped() && balloons[i]->isRopeAttached()) {
+						balloons[i]->pop();
+						if (popParticles) {
+							delete popParticles;
+						}
+						popParticles = new ParticleSystem(balloons[i]->getPosition(), balloons[i]->getColor());
+						printf("Balloon %zu POPPED!\n", i);
+						break;
+					}
+				}
+			}
+			keyM_wasPressed = keyM_isPressed; // save state
+			
 			if (popParticles) {
 				popParticles->update(dt);
 				if (!popParticles->isAlive()) {

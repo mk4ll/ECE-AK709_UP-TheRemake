@@ -31,6 +31,7 @@ public:
 
     // balloon-rope relation
     bool isAttached() const;
+    bool isRopeAttached() const { return m_attached; }
     const glm::vec3& getAnchor() const;
     const glm::vec3& getPosition() const;
     float getRopeLength() const;
