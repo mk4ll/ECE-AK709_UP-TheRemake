@@ -409,6 +409,15 @@ void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	house->bind();
 	house->draw();
 
+	// balloons
+	for (size_t i = 0; i < balloons.size(); ++i) {
+		mat4 balloonM = translate(mat4(1.0f), balloons[i]->getPosition());
+		balloonM = scale(balloonM, vec3(balloons[i]->getRadius()));
+		glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &balloonM[0][0]);
+		balloon->bind();
+		balloon->draw();
+	}
+
 	// binding the default framebuffer again
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
