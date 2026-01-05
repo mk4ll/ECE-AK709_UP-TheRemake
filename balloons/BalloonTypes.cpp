@@ -39,33 +39,33 @@ Material getBalloonMaterial(BalloonType type) {
     case BalloonType::CLASSIC:
         return Material{
             vec4(0.12f, 0.02f, 0.02f, 1.0f),  // Ka
-            vec4(0.85f, 0.10f, 0.10f, 1.0f),  // Kd - κόκκινο
+            vec4(0.85f, 0.10f, 0.10f, 1.0f),  // Kd - red
             vec4(0.35f, 0.35f, 0.35f, 1.0f),  // Ks
             48.0f                                  // Ns - medium shine
         };
 
     case BalloonType::GLITTER:
         return Material{
-            glm::vec4(0.25f, 0.15f, 0.20f, 1.0f),  // Ka
+            glm::vec4(0.35f, 0.25f, 0.30f, 1.0f),  // Ka
             glm::vec4(0.95f, 0.75f, 0.85f, 1.0f),  // Kd - ροζ
-            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f),  // Ks - ΠΟΛΥ shiny για sparkles
+            glm::vec4(0.95f, 0.95f, 0.95f, 1.0f),  // Ks - shiny for sparkles
             128.0f                                 // Ns - ultra glossy
         };
 
     case BalloonType::METALLIC:
         return Material{
             glm::vec4(0.3f, 0.3f, 0.35f, 1.0f),    // Ka
-            glm::vec4(0.6f, 0.6f, 0.7f, 1.0f),     // Kd - γκρι μεταλλικό
+            glm::vec4(0.6f, 0.6f, 0.7f, 1.0f),     // Kd - metallic gray
             glm::vec4(0.9f, 0.9f, 0.95f, 1.0f),    // Ks - mirror-like
             256.0f                                 // Ns - chrome effect
         };
 
     case BalloonType::NEON:
         return Material{
-            glm::vec4(0.5f, 0.9f, 0.6f, 1.0f),     // Ka - emissive!
-            glm::vec4(0.1f, 0.9f, 0.3f, 1.0f),     // Kd - πράσινο neon
+            glm::vec4(0.5f, 0.9f, 0.6f, 1.0f),     // Ka - emissive
+            glm::vec4(0.1f, 0.9f, 0.3f, 1.0f),     // Kd - neon green
             glm::vec4(0.8f, 1.0f, 0.8f, 1.0f),     // Ks - glow
-            64.0f                                  // Ns
+            64.0f
         };
 
     case BalloonType::TRANSPARENT:
@@ -73,7 +73,7 @@ Material getBalloonMaterial(BalloonType type) {
             glm::vec4(0.1f, 0.15f, 0.2f, 0.3f),    // Ka - διάφανο!
             glm::vec4(0.7f, 0.85f, 0.95f, 0.3f),   // Kd - γαλάζιο με alpha
             glm::vec4(0.9f, 0.9f, 1.0f, 1.0f),     // Ks - glass-like
-            96.0f                                  // Ns
+            96.0f
         };
 
     case BalloonType::TEXTURED_3D:
@@ -81,7 +81,7 @@ Material getBalloonMaterial(BalloonType type) {
             glm::vec4(0.2f, 0.1f, 0.05f, 1.0f),    // Ka
             glm::vec4(0.9f, 0.5f, 0.2f, 1.0f),     // Kd - πορτοκαλί
             glm::vec4(0.4f, 0.4f, 0.4f, 1.0f),     // Ks
-            32.0f                                  // Ns
+            32.0f
         };
 
     default:
