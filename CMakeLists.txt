@@ -131,6 +131,8 @@ add_executable(main
   balloons/rope.h
   balloons/ropeInstance.cpp
   balloons/ropeInstance.h
+  balloons/verletRope.cpp
+  balloons/verletRope.h
 
 
   physics/rigidBody.h
