@@ -248,7 +248,7 @@ void phong(float visibility) {
         fragmentColor.rgb += vec3(0.3, 0.25, 0.3) * fresnel;
 
         float glitter = glitterEffect(frag_position_world, time);
-        // Προσθήκη sparkles
+        // sparkles
         fragmentColor.rgb += vec3(glitter * 1.2);
         // Extra shine στα sparkles
         if (glitter > 0.5) {
