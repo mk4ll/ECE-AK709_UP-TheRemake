@@ -1,12 +1,17 @@
 #pragma once
 #include <glm/glm.hpp>
 
+using namespace glm;
+
 struct Particle {
     glm::vec3 position;
     glm::vec3 velocity;
+    glm::vec3 color;
     float life;          // seconds remaining
+    float initialLife;   // for alpha blending
 
-    Particle(const glm::vec3& pos, const glm::vec3& vel)
-        : position(pos), velocity(vel), life(1.5f) {
+
+    Particle(const vec3& pos, const vec3& vel, const vec3& col)
+        : position(pos), velocity(vel), , color(col), life(1.5f), initialLife(1.5f) {
     }
 };
