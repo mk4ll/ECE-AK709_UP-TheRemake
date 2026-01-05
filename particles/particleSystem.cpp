@@ -73,7 +73,7 @@ void ParticleSystem::draw(GLuint modelMatrixLocation, Drawable* mesh) const {
         // particle model Matrix
         mat4 M(1.0f);
         M = translate(M, p.position);     // translate to particle pos
-        M = scale(M, vec3(0.01f));        // scale down
+        M = scale(M, vec3(0.02f));        // scale down
 
         // upload and draw
         glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &M[0][0]);
