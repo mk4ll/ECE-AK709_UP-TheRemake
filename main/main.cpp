@@ -31,6 +31,7 @@
 #include <physics/rigidBody.h>
 #include <physics/collision.h>
 #include <particles/particleSystem.h>
+#include <house/house.h>
 
 using namespace std;
 using namespace glm;

@@ -121,6 +121,9 @@ add_executable(main
   terrain/river.cpp
   terrain/river.h
 
+  house/house.cpp
+  house/house.h
+
   balloons/balloon.cpp
   balloons/balloon.h
   balloons/balloonMesh.cpp
