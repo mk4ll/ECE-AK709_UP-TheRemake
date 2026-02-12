@@ -1,9 +1,11 @@
 #include "collision.h"
 #include <glm/glm.hpp>
 
+#include <vector>
+#include <limits>
+
 using namespace glm;
-
-
+using namespace std;
 
 void handleAABBSphereCollision(AABB& box, Sphere& sphere) {
     vec3 n;
@@ -50,10 +52,8 @@ bool checkForAABBSphereCollision(vec3& pos, float r, const AABB& box, vec3& n) {
 }
 
 
-// SPHERE-SPHERE COLLISION:
+// SPHERE-SPHERE COLLISION
 
-#include "collision.h"
-#include <glm/glm.hpp>
 
 // check function
 bool checkSphereSphereCollision(const Sphere& s1, const Sphere& s2) {
@@ -105,4 +105,50 @@ void handleSphereSphereCollision(Sphere& s1, Sphere& s2,
     vec3 impulse = j * collisionNormal;
     vel1 += impulse / mass1;
     vel2 -= impulse / mass2;
+}
+
+bool checkDualSphereCollision(const Sphere& mainSphere1, const Sphere& lowerSphere1,
+    const Sphere& mainSphere2, const Sphere& lowerSphere2) {
+    // collision check for all combinations
+    return checkSphereSphereCollision(mainSphere1, mainSphere2) ||
+        checkSphereSphereCollision(mainSphere1, lowerSphere2) ||
+        checkSphereSphereCollision(lowerSphere1, mainSphere2) ||
+        checkSphereSphereCollision(lowerSphere1, lowerSphere2);
+}
+
+void handleDualSphereCollision(Sphere& mainSphere1, Sphere& lowerSphere1,
+    Sphere& mainSphere2, Sphere& lowerSphere2,
+    vec3& vel1, vec3& vel2,
+    float mass1, float mass2) {
+
+    // get closest pair of spheres
+    float minDist = std::numeric_limits<float>::max();
+    Sphere* closestA = nullptr;
+    Sphere* closestB = nullptr;
+
+    struct SpherePair {
+        Sphere* a;
+        Sphere* b;
+        float dist;
+    };
+
+    std::vector<SpherePair> pairs = {
+        {&mainSphere1, &mainSphere2, length(mainSphere1.x - mainSphere2.x) - (mainSphere1.r + mainSphere2.r)},
+        {&mainSphere1, &lowerSphere2, length(mainSphere1.x - lowerSphere2.x) - (mainSphere1.r + lowerSphere2.r)},
+        {&lowerSphere1, &mainSphere2, length(lowerSphere1.x - mainSphere2.x) - (lowerSphere1.r + mainSphere2.r)},
+        {&lowerSphere1, &lowerSphere2, length(lowerSphere1.x - lowerSphere2.x) - (lowerSphere1.r + lowerSphere2.r)}
+    };
+
+    // get closest pair
+    for (const auto& pair : pairs) {
+        if (pair.dist < minDist) {
+            minDist = pair.dist;
+            closestA = pair.a;
+            closestB = pair.b;
+        }
+    }
+
+    if (closestA && closestB && minDist < 0.0f) {
+        handleSphereSphereCollision(*closestA, *closestB, vel1, vel2, mass1, mass2);
+    }
 }

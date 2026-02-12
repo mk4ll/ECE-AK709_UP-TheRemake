@@ -81,10 +81,11 @@ GLuint waterDuDvTexture;
 Drawable* balloon;
 BalloonMesh balloonMesh;
 Drawable* rope;
+Drawable* bananaModel;
 
 vector<Balloon*> balloons;
 vector<RopeInstance*> ropeInstances;
-const int NUM_BALLOONS = 50;					// AMOUNT OF BALLOONS
+const int NUM_BALLOONS = 25;					// AMOUNT OF BALLOONS
 
 ParticleSystem* popParticles = nullptr;
 
@@ -126,10 +127,18 @@ const Material martianTerrain{
 };
 
 const Material ropeMaterial{
-	glm::vec4(0.15f, 0.12f, 0.08f, 1.0f),  // Ka (ambient) - brown ambient
-	glm::vec4(0.45f, 0.38f, 0.25f, 1.0f),  // Kd (diffuse) - natural diffuse
-	glm::vec4(0.05f, 0.05f, 0.05f, 1.0f),  // Ks (specular) - ~0
+	glm::vec4(0.15f, 0.12f, 0.08f, 1.0f),  // Ka - brown ambient
+	glm::vec4(0.45f, 0.38f, 0.25f, 1.0f),  // Kd - natural diffuse
+	glm::vec4(0.05f, 0.05f, 0.05f, 1.0f),  // Ks - ~0
 	4.0f                                   // Ns - low shininess
+};
+
+// transparent balloon inner Obj: banana
+const Material bananaSkinMaterial{
+	vec4(0.2f, 0.2f, 0.2f, 1.0f),      // Ka - Standard low glow
+	vec4(0.58f, 0.54f, 0.02f, 1.0f),   // Kd - YELLOW color from file
+	vec4(0.1f, 0.1f, 0.1f, 1.0f),      // Ks - Low shine
+	10.0f                              // Ns
 };
 
 
@@ -236,6 +245,9 @@ void createContext() {
 	float waterLevel = -2.0f;
 	river = River::createFloodedCanyon(size, res, waterLevel, maxHeight);
 
+	// banana obj for transparent balloon
+	bananaModel = new Drawable(std::string("../assets/models/banana.obj"));
+
 	// balloons
 	/*/
 	// ONE BALLOON:
@@ -265,7 +277,10 @@ void createContext() {
 	// multiple balloons around the center of the chimney
 	for (int i = 0; i < NUM_BALLOONS; ++i) {
 		BalloonType type = getBalloonTypeByIndex(i);
-		Balloon* newBalloon = new Balloon(balloon, type);
+		// If transparent, add banana inside, else draw other type of balloon
+		Balloon* newBalloon = (type == BalloonType::TRANSPARENT)
+			? new Balloon(balloon, type, bananaModel)
+			: new Balloon(balloon, type);
 
 		// put them in a circle
 		float angle = (float)i / NUM_BALLOONS * 2.0f * 3.14159f;
@@ -555,7 +570,7 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 		glUniform1i(useTextureLocation, shaderFlag);
 
 		// special rendering for transparent balloons
-		if (type == BalloonType::TRANSPARENT) {
+		if (type == BalloonType::TRANSPARENT) {	
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			glDepthMask(GL_FALSE);
@@ -566,6 +581,14 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 		// reset transparency settings
 		if (type == BalloonType::TRANSPARENT) {
 			glDepthMask(GL_TRUE);
+			glDisable(GL_BLEND);
+		}
+
+		// draw inner obj
+		if (type == BalloonType::TRANSPARENT) {
+			uploadMaterial(bananaSkinMaterial);
+			glUniform1i(useTextureLocation, 0);
+			balloons[i]->drawContent(modelMatrixLocation);
 		}
 	}
 
@@ -612,7 +635,6 @@ void handleBalloonCollisions() {
 
 			// check for collision
 			if (checkSphereSphereCollision(s1, s2)) {
-				// Παίρνουμε references στα rigid bodies
 				RigidBody& rb1 = balloons[i]->getRigidBody();
 				RigidBody& rb2 = balloons[j]->getRigidBody();
 

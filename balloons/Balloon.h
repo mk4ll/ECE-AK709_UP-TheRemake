@@ -23,6 +23,8 @@ class Balloon {
 public:
     Balloon(Drawable* mesh);
     Balloon(Drawable* mesh, BalloonType type);
+    // separate constructor for transparent balloon with obj inside
+    Balloon(Drawable* mesh, BalloonType type, Drawable* innerObject);
 
     // setup
     void setAnchor(const vec3& anchor);
@@ -46,6 +48,10 @@ public:
 
     // add more balloons (collision detection)
     float getRadius() const { return m_radius; }
+    // collision detection fix: smaller imaginary sphere under the main one
+    vec3 getLowerSphereCenter() const { return m_body.position - vec3(0.0f, m_radius * 0.6f, 0.0f); }
+    float getLowerSphereRadius() const { return m_radius * 0.5f; }
+
     RigidBody& getRigidBody() { return m_body; }
     const RigidBody& getRigidBody() const { return m_body; }
 
@@ -58,6 +64,7 @@ public:
 
     // render
     void draw(GLuint modelMatrixLocation) const;
+    void drawContent(GLuint modelMatrixLocation) const; // for banana
 
     // balloon methods
     void release();
@@ -75,6 +82,7 @@ public:
 
 private:
     Drawable* m_mesh;
+    Drawable* m_innerObject;
 
     // physics
     RigidBody m_body;

@@ -43,6 +43,26 @@ Balloon::Balloon(Drawable* mesh, BalloonType type)
     m_body.mass = 1.2f;
 }
 
+// new constructor with innerObject for TRANSPARENT balloons
+Balloon::Balloon(Drawable* mesh, BalloonType type, Drawable* innerObject)
+    : m_mesh(mesh),
+    m_innerObject(innerObject),
+    m_ropeLength(5.0f),
+    m_attached(true),
+    m_radius(0.5f),
+    m_state(BalloonState::Spawn),
+    m_spawnTimer(0.0f),
+    m_popped(false),
+    m_verletRope(nullptr),
+    m_type(type),
+    m_glitterTime(0.0f)
+{
+    m_body.position = vec3(0.0f, 0.0f, 0.0f);
+    m_body.velocity = vec3(0.0f);
+    m_body.mass = 1.2f;
+}
+
+
 void Balloon::setAnchor(const vec3& anchor) {
     m_anchor = anchor;
     m_body.position = m_anchor + glm::vec3(0.0f, 1.2f, 0.0f);
@@ -161,6 +181,22 @@ void Balloon::draw(GLuint modelMatrixLocation) const {
 
     m_mesh->bind();
     m_mesh->draw();
+}
+
+void Balloon::drawContent(GLuint modelMatrixLocation) const {
+    if (m_popped) return;
+
+    // if transparent, add obj inside
+    if (m_type == BalloonType::TRANSPARENT && m_innerObject != nullptr) {
+        glm::mat4 innerM(1.0f);
+        innerM = glm::translate(innerM, m_body.position + vec3(0.0f, 0.75f, 0.0f));
+        innerM = glm::rotate(innerM, -3.14f/4.0f, vec3(1.0f, 0.0f, 0.0f));
+        innerM = glm::scale(innerM, glm::vec3(5.0f));
+
+        glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &innerM[0][0]);
+        m_innerObject->bind();
+        m_innerObject->draw();
+    }
 }
 
 void Balloon::release() {
