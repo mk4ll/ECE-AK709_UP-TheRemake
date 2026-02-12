@@ -11,7 +11,11 @@ House::House(Drawable* mesh, const vec3& initialPosition)
     m_isFlying(false),
     m_attachedBalloonCount(0),
     m_liftPerBalloon(15.0f),      // Each balloon provides 15N of lift
-    m_dragCoefficient(5.0f)        // Air resistance
+    m_dragCoefficient(5.0f),      // Air resistance
+    m_takeoffTimer(0.0f),         // Start at 0
+    m_takeoffDelay(2.5f),         // Wait 2.5 seconds before takeoff
+    m_isTakingOff(false)          // Not taking off initially
+
 {
     // Initialize rigid body
     m_body.position = initialPosition;
@@ -37,16 +41,43 @@ void House::applyForces(const std::vector<Balloon*>& balloons) {
 
     // 2. LIFT from balloons
     if (m_attachedBalloonCount >= BALLOON_THRESHOLD) {
-        m_isFlying = true;
-
-        // Total lift force = No. of balloons * lift/balloon
-        float totalLift = m_attachedBalloonCount * m_liftPerBalloon;
-        vec3 liftForce = vec3(0.0f, totalLift, 0.0f);
-        m_body.applyForce(liftForce);
+        m_isTakingOff = true;
 
     }
     else {
+        // Not enough balloons - reset takeoff
+        m_isTakingOff = false;
+        m_takeoffTimer = 0.0f;
         m_isFlying = false;
+    }
+    if (m_isTakingOff) {
+        // Check if house is still on ground
+        bool onGround = (m_body.position.y <= m_initialPosition.y + 0.1f);
+
+        if (onGround && m_takeoffTimer < m_takeoffDelay) {
+            // PHASE 1: Building tension - house straining on ground
+            // Apply very weak lift that doesn't overcome weight yet
+            float tensionFactor = m_takeoffTimer / m_takeoffDelay; // 0 to 1
+            float weakLift = m_attachedBalloonCount * m_liftPerBalloon * 0.3f * tensionFactor;
+            m_body.applyForce(vec3(0.0f, weakLift, 0.0f));
+
+            // Strong ground friction keeps it down
+            float groundFriction = -m_body.velocity.y * 100.0f;
+            m_body.applyForce(vec3(0.0f, groundFriction, 0.0f));
+
+        }
+        else {
+            // PHASE 2: Actually taking off!
+            m_isFlying = true;
+
+            // Gradual increase to full lift over first second of flight
+            float liftupTime = m_takeoffTimer - m_takeoffDelay;
+            float liftupFactor = glm::clamp(liftupTime / 1.0f, 0.0f, 1.0f);
+
+            float totalLift = m_attachedBalloonCount * m_liftPerBalloon * liftupFactor;
+            vec3 liftForce = vec3(0.0f, totalLift, 0.0f);
+            m_body.applyForce(liftForce);
+        }
     }
 
     // 3. AIR DRAG
@@ -65,6 +96,9 @@ void House::applyForces(const std::vector<Balloon*>& balloons) {
 }
 
 void House::update(float dt) {
+    if (m_isTakingOff) {
+        m_takeoffTimer += dt;
+    }
     // Integrate physics
     m_body.integrate(dt);
 

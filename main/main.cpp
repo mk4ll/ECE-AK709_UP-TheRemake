@@ -71,6 +71,7 @@ Drawable* quad;
 // task 1
 Drawable* house;
 GLuint houseDiffuseTexture, houseSpecularTexture;
+House* housePhysics;
 Drawable* mountainTerrain;
 Drawable* river;
 GLuint waterDiffuseTexture, waterSpecularTexture;
@@ -86,7 +87,7 @@ Drawable* bananaModel;
 
 vector<Balloon*> balloons;
 vector<RopeInstance*> ropeInstances;
-const int NUM_BALLOONS = 25;					// AMOUNT OF BALLOONS
+const int NUM_BALLOONS = 15;					// AMOUNT OF BALLOONS
 
 ParticleSystem* popParticles = nullptr;
 
@@ -236,6 +237,10 @@ void createContext() {
 
 	// house 
 	house = new Drawable("../assets/models/houseUP.obj");
+
+	vec3 peak = Terrain::get_terrain_peak();
+	housePhysics = new House(house, peak);
+
 	// terrain
 	float size = 100.0f;
 	float res = 200.0f;
@@ -269,7 +274,6 @@ void createContext() {
 
 	//
 	// multiple balloons
-	vec3 peak = Terrain::get_terrain_peak();
 	vec3 chimneyOffset = vec3(-0.18f, 5.0f, -2.0f);
 	vec3 chimneyPos = peak + chimneyOffset;
 
@@ -371,6 +375,12 @@ void free() {
 		delete r;
 	}
 	ropeInstances.clear();
+	// del house physics
+	if (housePhysics) {
+		delete housePhysics;
+		housePhysics = nullptr;
+	}
+
 	// Delete Shader Programs
 	glDeleteProgram(shaderProgram);
 	glDeleteProgram(depthProgram);
@@ -414,8 +424,9 @@ void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	river->draw();
 
 	// house
-	mat4 modelMatrix = mat4(1.0f);
-	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &modelMatrix[0][0]);
+	mat4 houseModelMatrix = mat4(1.0f);
+	houseModelMatrix = translate(houseModelMatrix, housePhysics->getPosition());
+	glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &houseModelMatrix[0][0]);
 	house->bind();
 	house->draw();
 
@@ -524,10 +535,6 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	// house
 	// get terrain peak
-	vec3 peak = Terrain::get_terrain_peak();
-	//place the house on top of the peak
-	mat4 houseModelMatrix = translate(mat4(1.0f), peak + vec3(0.0f, 0.0f, 0.0f));
-	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &houseModelMatrix[0][0]);
 
 	// Activate and bind diffuse texture
 	glActiveTexture(GL_TEXTURE0);
@@ -541,8 +548,7 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	glUniform1i(useTextureLocation, 1);
 
-	house->bind();
-	house->draw();
+	housePhysics->draw(modelMatrixLocation);
 
 	// multiple balloons
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &mat4(1.0f)[0][0]);
@@ -742,13 +748,28 @@ void mainLoop() {
 
 		handleBalloonCollisions();
 
+		housePhysics->applyForces(balloons);
+		housePhysics->update(dt);
+		//
+		//debugging
+		printf("House Y: %.2f, Balloons: %d, Flying: %d\n",
+			housePhysics->getPosition().y,
+			housePhysics->getAttachedBalloonCount(),
+			housePhysics->isFlying());
+		//
+
 		// update ropes
 		for (size_t i = 0; i < balloons.size(); ++i) {
 			if (!balloons[i]->isPopped()) {
 				float angle = (float)i / NUM_BALLOONS * 2.0f * 3.14159f;
-				float radius = 1.5f;
+				float radius = 0.1f;
 				vec3 offset = vec3(cos(angle) * radius, 0.0f, sin(angle) * radius);
-				vec3 anchorPos = peak + vec3(-0.18f, 5.0f, -2.0f) + offset;
+				vec3 chimneyOffset = vec3(-0.18f, 5.0f, -2.0f);
+				vec3 anchorPos = housePhysics->getPosition() + chimneyOffset + offset;
+
+				if (balloons[i]->isRopeAttached()) {
+					balloons[i]->updateAnchor(anchorPos);
+				}
 
 				ropeInstances[i]->updateBezier(anchorPos,
 					balloons[i]->getPosition(),

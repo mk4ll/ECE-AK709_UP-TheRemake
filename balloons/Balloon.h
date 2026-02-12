@@ -62,6 +62,9 @@ public:
 
     bool isPopped() const;
 
+    // update anchor
+    void updateAnchor(const vec3& anchor);
+
     // render
     void draw(GLuint modelMatrixLocation) const;
     void drawContent(GLuint modelMatrixLocation) const; // for banana

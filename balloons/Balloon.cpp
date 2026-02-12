@@ -73,6 +73,10 @@ void Balloon::setAnchor(const vec3& anchor) {
     m_spawnTimer = 0.0f;
 }
 
+void Balloon::updateAnchor(const vec3& anchor) {
+    m_anchor = anchor;
+}
+
 bool Balloon::isPopped() const {
     return m_popped;
 }   

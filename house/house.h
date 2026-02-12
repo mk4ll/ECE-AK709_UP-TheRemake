@@ -28,8 +28,8 @@ public:
 
     // Configuration
     static constexpr int BALLOON_THRESHOLD = 8;  // Minimum balloons needed to fly
-    static constexpr float MAX_HEIGHT = 50.0f;   // Maximum height above initial position
-    static constexpr float HOUSE_MASS = 100.0f;  // Mass of the house
+    static constexpr float MAX_HEIGHT = 100.0f;   // Maximum height above initial position
+    static constexpr float HOUSE_MASS = 20.0f;  // Mass of the house                                           ***
 
 private:
     Drawable* m_mesh;
@@ -42,4 +42,9 @@ private:
     // Physics parameters
     float m_liftPerBalloon;       // Lift force each balloon provides
     float m_dragCoefficient;      // Air resistance
+
+    // Takeoff mechanics
+    float m_takeoffTimer;         // Time since enough balloons attached
+    float m_takeoffDelay;         // Delay before liftoff starts (2-3 seconds)
+    bool m_isTakingOff;           // In takeoff phase
 };
