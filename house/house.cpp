@@ -13,7 +13,7 @@ House::House(Drawable* mesh, const vec3& initialPosition)
     m_liftPerBalloon(15.0f),      // Each balloon provides 15N of lift
     m_dragCoefficient(5.0f),      // Air resistance
     m_takeoffTimer(0.0f),         // Start at 0
-    m_takeoffDelay(2.5f),         // Wait 2.5 seconds before takeoff
+    m_takeoffDelay(10.0f),         // Wait 10 seconds (for everything to load) before takeoff
     m_isTakingOff(false),          // Not taking off initially
     m_getTerrainHeight(nullptr)
 
