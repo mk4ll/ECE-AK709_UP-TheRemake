@@ -29,7 +29,15 @@ public:
     // Configuration
     static constexpr int BALLOON_THRESHOLD = 8;  // Minimum balloons needed to fly
     static constexpr float MAX_HEIGHT = 100.0f;   // Maximum height above initial position
-    static constexpr float HOUSE_MASS = 20.0f;  // Mass of the house                                           ***
+    static constexpr float HOUSE_MASS = 20.0f;  // Mass of the house         ***
+    
+    static constexpr float HOUSE_WIDTH = 8.0f;    // X dimension
+    static constexpr float HOUSE_HEIGHT = 10.0f;  // Y dimension  
+    static constexpr float HOUSE_DEPTH = 8.0f;    // Z dimension
+
+    // Terrain collision
+    using TerrainHeightFunc = float(*)(float x, float z);
+    void setTerrainHeightFunction(TerrainHeightFunc func) { m_getTerrainHeight = func; }
 
 private:
     Drawable* m_mesh;
@@ -47,4 +55,7 @@ private:
     float m_takeoffTimer;         // Time since enough balloons attached
     float m_takeoffDelay;         // Delay before liftoff starts (2-3 seconds)
     bool m_isTakingOff;           // In takeoff phase
+
+    // Terrain collision
+    TerrainHeightFunc m_getTerrainHeight;
 };

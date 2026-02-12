@@ -41,6 +41,7 @@ void initialize();
 void createContext();
 void mainLoop();
 void free();
+float getTerrainHeightAt(float x, float z);
 
 #define W_WIDTH 1024
 #define W_HEIGHT 768
@@ -238,8 +239,9 @@ void createContext() {
 	// house 
 	house = new Drawable("../assets/models/houseUP.obj");
 
-	vec3 peak = Terrain::get_terrain_peak();
+	vec3 peak = Terrain::get_terrain_peak() + vec3(5.0f, 0.0f, 0.0f);
 	housePhysics = new House(house, peak);
+	housePhysics->setTerrainHeightFunction(getTerrainHeightAt);
 
 	// terrain
 	float size = 100.0f;
@@ -660,6 +662,11 @@ void handleBalloonCollisions() {
 	}
 }
 
+float getTerrainHeightAt(float x, float z) {
+	const float terrainSize = 100.0f;
+	const float terrainMaxHeight = 15.0f;
+	return Terrain::sampleHeight(x, z, terrainSize, terrainMaxHeight);
+}
 
 void mainLoop() {
 	static float lastTime = 0.0f;
@@ -735,7 +742,7 @@ void mainLoop() {
 			}
 		}
 		// update all balloons
-		vec3 peak = Terrain::get_terrain_peak();
+		vec3 peak = Terrain::get_terrain_peak() + vec3(5.0f, 0.0f, 0.0f);
 
 		for (size_t i = 0; i < balloons.size(); ++i) {
 			balloons[i]->applyForces();
@@ -872,7 +879,7 @@ void initialize() {
 	//initalize terrain
 	mountainTerrain = Terrain::generate(100.0f, 50, 15.0f);
 	// get terrain peak
-	vec3 peak = Terrain::get_terrain_peak();
+	vec3 peak = Terrain::get_terrain_peak() + vec3(5.0f, 0.0f, 0.0f);
 
 	// Create camera
 	camera = new Camera(window);

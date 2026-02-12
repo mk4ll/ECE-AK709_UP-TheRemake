@@ -14,7 +14,8 @@ House::House(Drawable* mesh, const vec3& initialPosition)
     m_dragCoefficient(5.0f),      // Air resistance
     m_takeoffTimer(0.0f),         // Start at 0
     m_takeoffDelay(2.5f),         // Wait 2.5 seconds before takeoff
-    m_isTakingOff(false)          // Not taking off initially
+    m_isTakingOff(false),          // Not taking off initially
+    m_getTerrainHeight(nullptr)
 
 {
     // Initialize rigid body
@@ -102,10 +103,59 @@ void House::update(float dt) {
     // Integrate physics
     m_body.integrate(dt);
 
-    // GROUND CONSTRAINT - House cannot go below initial position
-    if (m_body.position.y < m_initialPosition.y) {
-        m_body.position.y = m_initialPosition.y;
-        m_body.velocity.y = 0.0f;  // Stop downward velocity
+    // TERRAIN COLLISION - Check multiple points under the house
+    if (m_getTerrainHeight != nullptr) {
+        // Sample terrain at 4 corners + center of house base
+        const float halfWidth = HOUSE_WIDTH * 0.5f;
+        const float halfDepth = HOUSE_DEPTH * 0.5f;
+
+        vec3 corners[5] = {
+            m_body.position + vec3(-halfWidth, 0, -halfDepth),  // Front-left
+            m_body.position + vec3(halfWidth, 0, -halfDepth),   // Front-right
+            m_body.position + vec3(-halfWidth, 0, halfDepth),   // Back-left
+            m_body.position + vec3(halfWidth, 0, halfDepth),    // Back-right
+            m_body.position                                      // Center
+        };
+
+        // Find the highest terrain point under the house
+        float maxTerrainHeight = -1e6f;
+        for (int i = 0; i < 5; ++i) {
+            float terrainHeight = m_getTerrainHeight(corners[i].x, corners[i].z);
+            maxTerrainHeight = glm::max(maxTerrainHeight, terrainHeight);
+        }
+
+        // The bottom of the house should not go below terrain
+        float houseBottom = m_body.position.y;
+
+        if (houseBottom < maxTerrainHeight) {
+            // Collision! Move house up
+            float penetration = maxTerrainHeight - houseBottom;
+            m_body.position.y += penetration;
+
+            // Apply collision response
+            if (m_body.velocity.y < 0.0f) {
+                // Bouncy collision (coefficient of restitution)
+                float restitution = 0.1f;  // Some bounce
+                m_body.velocity.y = -m_body.velocity.y * restitution;
+
+                // If velocity is very small, just stop it (resting contact)
+                if (glm::abs(m_body.velocity.y) < 0.5f) {
+                    m_body.velocity.y = 0.0f;
+                }
+            }
+
+            // Ground friction when on terrain
+            float groundFrictionFactor = 0.95f;
+            m_body.velocity.x *= groundFrictionFactor;
+            m_body.velocity.z *= groundFrictionFactor;
+        }
+    }
+    else {
+        // FALLBACK: Simple ground constraint (if terrain function not set)
+        if (m_body.position.y < m_initialPosition.y) {
+            m_body.position.y = m_initialPosition.y;
+            m_body.velocity.y = 0.0f;
+        }
     }
 
     // cout for debugging
