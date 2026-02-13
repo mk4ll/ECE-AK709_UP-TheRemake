@@ -21,6 +21,8 @@ uniform int useTexture; // 0-> terrain, 1->house,
 
 // task 1: make river flow
 uniform float time;
+//task 5: beacon
+uniform int isBeacon;
 
 // light properties
 struct Light {
@@ -115,6 +117,23 @@ vec3 proceduralPattern(vec3 worldPos, vec3 baseColor) {
     return baseColor * (0.6 + pattern * 0.8);
 }
 
+// beacon animated patterns
+vec3 beaconPattern(vec2 uv, vec3 baseColor, float time) {
+    // Moving rings pattern
+    float ringPattern = sin((uv.y * 15.0 - time * 3.0) * 3.14159);
+    ringPattern = smoothstep(0.2, 0.8, ringPattern);
+    
+    // Pulsating brightness
+    float pulse = 0.7 + 0.3 * sin(time * 2.0);
+    
+    // Golden glow color
+    vec3 glowColor = vec3(1.0, 0.9, 0.3);
+    
+    // Mix base color with glowing pattern
+    vec3 patternColor = mix(baseColor, glowColor, ringPattern * pulse * 0.7);
+    
+    return patternColor;
+}
 
 void main() {   
     // Shadow calculation
@@ -309,6 +328,15 @@ void phong(float visibility) {
     // water opacity
     if (useTexture == 2) {
         fragmentColor.a = 0.8; 
+    }
+    // BEACON effect
+    if (isBeacon == 1) {
+        // Apply animated patterns to beacon surface
+        fragmentColor.rgb = beaconPattern(vertex_UV, fragmentColor.rgb, time);
+        
+        // Pulsating transparency for extra glow effect
+        float pulse = 0.7 + 0.3 * sin(time * 2.0);
+        fragmentColor.a = 0.6 + 0.2 * pulse;
     }
 }
 

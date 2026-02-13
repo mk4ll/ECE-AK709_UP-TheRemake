@@ -123,6 +123,8 @@ add_executable(main
 
   house/house.cpp
   house/house.h
+  beacon/beacon.cpp
+  beacon/beacon.h
 
   balloons/balloon.cpp
   balloons/balloon.h

@@ -33,6 +33,8 @@
 #include <particles/particleSystem.h>
 #include <house/house.h>
 
+#include <beacon/beacon.h>
+
 using namespace std;
 using namespace glm;
 
@@ -93,6 +95,7 @@ const int NUM_BALLOONS = 15;					// AMOUNT OF BALLOONS
 ParticleSystem* popParticles = nullptr;
 
 //
+Beacon* destinationBeacon = nullptr;
 
 // locations for shaderProgram
 GLuint viewMatrixLocation;
@@ -109,10 +112,9 @@ GLuint depthMapSampler;
 GLuint lightVPLocation;
 
 GLuint timeLocation;
+GLuint isBeaconLocation; //task5
 
 GLuint dudvSampler;
-
-
 
 // locations for depthProgram
 GLuint shadowViewProjectionLocation;
@@ -142,6 +144,13 @@ const Material bananaSkinMaterial{
 	vec4(0.58f, 0.54f, 0.02f, 1.0f),   // Kd - YELLOW color from file
 	vec4(0.1f, 0.1f, 0.1f, 1.0f),      // Ks - Low shine
 	10.0f                              // Ns
+};
+
+const Material beaconMaterial{
+	vec4(1.0f, 0.9f, 0.3f, 0.08f),   // Ka - bright yellow
+	vec4(1.0f, 0.8f, 0.2f, 0.1f),   // Kd - gold
+	vec4(1.0f, 1.0f, 0.8f, 0.1f),   // Ks - bright
+	32.0f                            // Ns - high shininess
 };
 
 
@@ -209,6 +218,8 @@ void createContext() {
 	//
 	// for time in shader
 	timeLocation = glGetUniformLocation(shaderProgram, "time");
+	//for beacon in shader
+	isBeaconLocation = glGetUniformLocation(shaderProgram, "isBeacon");
 	//
 
 	// Task 1.4
@@ -244,35 +255,23 @@ void createContext() {
 	housePhysics->setTerrainHeightFunction(getTerrainHeightAt);
 
 	// terrain
-	float size = 100.0f;
+	float terrainSize = 100.0f;
 	float res = 200.0f;
 	float maxHeight = 15.0f;
 
-	mountainTerrain = Terrain::generate(size, res, maxHeight);
+	mountainTerrain = Terrain::generate(terrainSize, res, maxHeight);
 
 	float waterLevel = -2.0f;
-	river = River::createFloodedCanyon(size, res, waterLevel, maxHeight);
+	river = River::createFloodedCanyon(terrainSize, res, waterLevel, maxHeight);
+
+	// destination beacon
+	vec3 beaconPos = Beacon::generateRandomBeaconPosition(terrainSize, maxHeight);
+	destinationBeacon = new Beacon(beaconPos, 4.0f, 40.0f);
+	// debugging 
+	printf("Beacon created at position: (%.2f, %.2f, %.2f)\n", beaconPos.x, beaconPos.y, beaconPos.z);
 
 	// banana obj for transparent balloon
 	bananaModel = new Drawable(std::string("../assets/models/banana.obj"));
-
-	// balloons
-	/*/
-	// ONE BALLOON:
-	ropeInstance = new RopeInstance(Rope::DEFAULT_LENGTH);
-
-	vec3 peak = Terrain::get_terrain_peak();
-	vec3 chimneyOffset = vec3(-0.18f, 5.0f, -2.0f);
-	vec3 chimneyPos = peak + chimneyOffset;
-
-	// balloon
-	balloon = new Drawable(balloonMesh.positions, balloonMesh.uvs);
-	balloonObj = new Balloon(balloon);
-
-	// anchor = chimney
-	balloonObj->setAnchor(chimneyPos);
-	balloonObj->attach(Rope::DEFAULT_LENGTH);
-	/*/
 
 	//
 	// multiple balloons
@@ -367,12 +366,12 @@ void createContext() {
 
 
 void free() {
-	// Delete balloons
+	// del balloons
 	for (auto* b : balloons) {
 		delete b;
 	}
 	balloons.clear();
-	// Delete ropes
+	// del ropes
 	for (auto* r : ropeInstances) {
 		delete r;
 	}
@@ -381,6 +380,11 @@ void free() {
 	if (housePhysics) {
 		delete housePhysics;
 		housePhysics = nullptr;
+	}
+	// del beacon
+	if (destinationBeacon) {
+		delete destinationBeacon;
+		destinationBeacon = nullptr;
 	}
 
 	// Delete Shader Programs
@@ -551,6 +555,24 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 	glUniform1i(useTextureLocation, 1);
 
 	housePhysics->draw(modelMatrixLocation);
+
+	// beacon
+	if (destinationBeacon) {
+		glUseProgram(shaderProgram);
+		uploadMaterial(beaconMaterial);
+		
+		glUniform1i(useTextureLocation, 0);
+		// blending for transparency
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		// Set beacon flag
+		glUniform1i(isBeaconLocation, 1);
+		// Draw beacon with time for animation
+		destinationBeacon->draw(modelMatrixLocation, timeLocation);
+		// Reset beacon flag
+		glUniform1i(isBeaconLocation, 0);
+	}
 
 	// multiple balloons
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &mat4(1.0f)[0][0]);
@@ -757,13 +779,19 @@ void mainLoop() {
 
 		housePhysics->applyForces(balloons);
 		housePhysics->update(dt);
-		//
+
+		//beacon update
+		if (destinationBeacon) {
+			destinationBeacon->update(dt);
+		}
+
+		/*/
 		//debugging
 		printf("House Y: %.2f, Balloons: %d, Flying: %d\n",
 			housePhysics->getPosition().y,
 			housePhysics->getAttachedBalloonCount(),
 			housePhysics->isFlying());
-		//
+		/*/
 
 		// update ropes
 		for (size_t i = 0; i < balloons.size(); ++i) {
@@ -800,7 +828,6 @@ void mainLoop() {
 			lighting_pass(viewMatrix, projectionMatrix);
 		}
 		//*/
-
 
 
 		glfwSwapBuffers(window);
