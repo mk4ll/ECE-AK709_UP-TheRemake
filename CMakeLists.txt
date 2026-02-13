@@ -155,6 +155,8 @@ add_executable(main
 
   navigation/autopilot.cpp
   navigation/autopilot.h
+  navigation/usernav.cpp
+  navigation/usernav.h
 
   render/render.cpp
   render/render.h
