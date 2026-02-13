@@ -265,7 +265,7 @@ void createContext() {
 	river = River::createFloodedCanyon(terrainSize, res, waterLevel, maxHeight);
 
 	// destination beacon
-	vec3 beaconPos = Beacon::generateRandomBeaconPosition(terrainSize, maxHeight);
+	vec3 beaconPos = Beacon::generateRandomBeaconPosition(terrainSize, maxHeight, peak);
 	destinationBeacon = new Beacon(beaconPos, 4.0f, 40.0f);
 	// debugging 
 	printf("Beacon created at position: (%.2f, %.2f, %.2f)\n", beaconPos.x, beaconPos.y, beaconPos.z);

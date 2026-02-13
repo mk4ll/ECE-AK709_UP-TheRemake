@@ -15,7 +15,7 @@ Beacon::Beacon(const vec3& position, float radius, float height)
     m_animationTime(0.0f),
     m_animationSpeed(1.0f)
 {
-    generateCylinderMesh(16, 8);  // Higher resolution for better pattern display
+    generateCylinderMesh(16, 8);
 }
 
 Beacon::~Beacon() {
@@ -108,20 +108,37 @@ void Beacon::draw(GLuint modelMatrixLocation, GLuint timeLocation) const {
     m_mesh->draw();
 }
 
-vec3 Beacon::generateRandomBeaconPosition(float terrainSize, float maxHeight) {
+vec3 Beacon::generateRandomBeaconPosition(float terrainSize, float maxHeight, const vec3& housePosition) {
     // Use random device for better randomness
     static std::random_device rd;
     static std::mt19937 gen(rd());
 
-    // Define the right tepui area (positive X side)
-    // The right plateau is centered around x = +0.30 * terrainSize
+    // Tepui centers from terrain.cpp
+    float leftPlateauCenter = -0.30f * terrainSize;
     float rightPlateauCenter = 0.30f * terrainSize;
-    float plateauWidth = 0.14f * terrainSize;  // Based on terrain.cpp plateau definition
 
-    // Random position within the right plateau
+    // Determine which tepui the house is on by checking its X coordinate
+    bool houseOnLeftTepui = (housePosition.x < 0.0f);
+
+    // Choose the opposite tepui for beacon
+    float targetPlateauCenter;
+    float plateauWidth;
+
+    if (houseOnLeftTepui) {
+        // House on left => spawn beacon on RIGHT tepui
+        targetPlateauCenter = rightPlateauCenter;
+        plateauWidth = 0.14f * terrainSize;  // Right plateau width
+    }
+    else {
+        // House on right => spawn beacon on LEFT tepui  
+        targetPlateauCenter = leftPlateauCenter;
+        plateauWidth = 0.10f * terrainSize;  // Left plateau width
+    }
+
+    // Random position within the target plateau
     std::uniform_real_distribution<float> xDist(
-        rightPlateauCenter - plateauWidth * 0.8f,
-        rightPlateauCenter + plateauWidth * 0.8f
+        targetPlateauCenter - plateauWidth * 0.8f,
+        targetPlateauCenter + plateauWidth * 0.8f
     );
 
     // Random Z position (avoiding edges)
@@ -130,11 +147,49 @@ vec3 Beacon::generateRandomBeaconPosition(float terrainSize, float maxHeight) {
         terrainSize * 0.4f
     );
 
-    float x = xDist(gen);
-    float z = zDist(gen);
+    // REJECTION SAMPLING: Try random positions until we find one with acceptable slope
+    const float MAX_SLOPE = 0.15f;  // Maximum acceptable slope (tan of angle)
+    const int MAX_ATTEMPTS = 100;    // Safety limit to avoid infinite loop
 
-    // Get the terrain height at this position
-    float terrainHeight = Terrain::sampleHeight(x, z, terrainSize, maxHeight);
+    float x, z, terrainHeight;
+    int attempts = 0;
+    bool foundGoodSpot = false;
+
+    while (!foundGoodSpot && attempts < MAX_ATTEMPTS) {
+        x = xDist(gen);
+        z = zDist(gen);
+
+        // Get the terrain height at this position
+        terrainHeight = Terrain::sampleHeight(x, z, terrainSize, maxHeight);
+
+        // Calculate slope by sampling nearby points
+        const float sampleDist = 0.5f;  // Distance to sample for gradient calculation
+
+        float heightX1 = Terrain::sampleHeight(x - sampleDist, z, terrainSize, maxHeight);
+        float heightX2 = Terrain::sampleHeight(x + sampleDist, z, terrainSize, maxHeight);
+        float heightZ1 = Terrain::sampleHeight(x, z - sampleDist, terrainSize, maxHeight);
+        float heightZ2 = Terrain::sampleHeight(x, z + sampleDist, terrainSize, maxHeight);
+
+        // Calculate gradients
+        float gradientX = (heightX2 - heightX1) / (2.0f * sampleDist);
+        float gradientZ = (heightZ2 - heightZ1) / (2.0f * sampleDist);
+
+        // Calculate slope magnitude (tan of the angle)
+        float slope = sqrt(gradientX * gradientX + gradientZ * gradientZ);
+
+        // Check if slope is acceptable
+        if (slope < MAX_SLOPE) {
+            foundGoodSpot = true;
+        }
+
+        attempts++;
+    }
+
+    // If we couldn't find a good spot after many attempts, use the last one anyway
+    // won't happen, because we have plenty of flat surfaces, but just in case
+    if (!foundGoodSpot) {
+        printf("Warning: Could not find flat spot for beacon after %d attempts. Using last position.\n", MAX_ATTEMPTS);
+    }
 
     // Place beacon slightly above terrain (starting from ground level)
     float y = terrainHeight;

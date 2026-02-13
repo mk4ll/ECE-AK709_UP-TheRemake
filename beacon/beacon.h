@@ -20,7 +20,7 @@ public:
     float getAnimationTime() const { return m_animationTime; }
 
     // Generate a random position on the right tepui (opposite from house)
-    static glm::vec3 generateRandomBeaconPosition(float terrainSize, float maxHeight);
+    static glm::vec3 generateRandomBeaconPosition(float terrainSize, float maxHeight, const glm::vec3& housePosition);
 
 private:
     void generateCylinderMesh(int radialSegments, int heightSegments);
