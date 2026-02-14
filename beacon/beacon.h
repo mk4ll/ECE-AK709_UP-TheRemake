@@ -6,7 +6,7 @@
 
 class Beacon {
 public:
-    Beacon(const glm::vec3& position, float radius = 2.0f, float height = 20.0f);
+    Beacon(const glm::vec3& position, float radius = 5.0f, float height = 20.0f);
     ~Beacon();
 
     // Rendering

@@ -34,8 +34,9 @@
 #include <house/house.h>
 
 #include <beacon/beacon.h>
-// task 7
-
+// task 5
+#include "navigation/autopilot.h"
+//task 7
 
 using namespace std;
 using namespace glm;
@@ -96,8 +97,9 @@ const int NUM_BALLOONS = 15;					// AMOUNT OF BALLOONS
 
 ParticleSystem* popParticles = nullptr;
 
-//
+// task 5
 Beacon* destinationBeacon = nullptr;
+Autopilot autopilot;
 
 // locations for shaderProgram
 GLuint viewMatrixLocation;
@@ -559,24 +561,6 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
 	housePhysics->draw(modelMatrixLocation);
 
-	// beacon
-	if (destinationBeacon) {
-		glUseProgram(shaderProgram);
-		uploadMaterial(beaconMaterial);
-		
-		glUniform1i(useTextureLocation, 0);
-		// blending for transparency
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		// Set beacon flag
-		glUniform1i(isBeaconLocation, 1);
-		// Draw beacon with time for animation
-		destinationBeacon->draw(modelMatrixLocation, timeLocation);
-		// Reset beacon flag
-		glUniform1i(isBeaconLocation, 0);
-	}
-
 	// multiple balloons
 	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &mat4(1.0f)[0][0]);
 	uploadMaterial(ropeMaterial);
@@ -624,6 +608,26 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 			glUniform1i(useTextureLocation, 0);
 			balloons[i]->drawContent(modelMatrixLocation);
 		}
+	}
+
+	// beacon
+	if (destinationBeacon) {
+		glUseProgram(shaderProgram);
+		uploadMaterial(beaconMaterial);
+
+		glUniform1i(useTextureLocation, 0);
+		// blending for transparency
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glDepthMask(GL_FALSE);
+
+		// Set beacon flag
+		glUniform1i(isBeaconLocation, 1);
+		// Draw beacon with time for animation
+		destinationBeacon->draw(modelMatrixLocation, timeLocation);
+		// Reset beacon flag
+		glUniform1i(isBeaconLocation, 0);
+		glDepthMask(GL_TRUE);
 	}
 
 	// reset for particles
@@ -781,13 +785,43 @@ void mainLoop() {
 		handleBalloonCollisions();
 
 		housePhysics->applyForces(balloons);
-		housePhysics->update(dt);
 
-
-		//beacon update
+		// beacon update
 		if (destinationBeacon) {
 			destinationBeacon->update(dt);
+
+			// Task 5 & 7: Autopilot and User Control
+			bool userControlActive = false;
+			vec3 userForce(0.0f);
+			float controlStrength = 50.0f; // Strong user control
+
+			if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+				userForce.x += controlStrength;
+				userControlActive = true;
+			}
+			if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+				userForce.x -= controlStrength;
+				userControlActive = true;
+			}
+			if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+				userForce.z -= controlStrength; // Forward
+				userControlActive = true;
+			}
+			if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+				userForce.z += controlStrength; // Backward
+				userControlActive = true;
+			}
+
+			if (userControlActive) {
+				autopilot.applyUserControl(housePhysics, userForce);
+			}
+			else {
+				autopilot.update(housePhysics, destinationBeacon, balloons,dt);
+			}
 		}
+
+
+		housePhysics->update(dt);
 
 		/*/
 		//debugging

@@ -153,6 +153,9 @@ add_executable(main
   particles/particleSystem.cpp
   particles/particleSystem.h
 
+  navigation/autopilot.cpp
+  navigation/autopilot.h
+
   render/render.cpp
   render/render.h
 

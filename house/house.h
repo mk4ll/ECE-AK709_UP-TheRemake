@@ -35,8 +35,8 @@ public:
 
     // Configuration
     static constexpr int BALLOON_THRESHOLD = 8;
-    static constexpr float MAX_HEIGHT = 100.0f;
-    static constexpr float HOUSE_MASS = 20.0f;
+    static constexpr float MAX_HEIGHT = 50.0f;
+    static constexpr float HOUSE_MASS = 22.4f;
 
     static constexpr float HOUSE_WIDTH = 8.0f;
     static constexpr float HOUSE_HEIGHT = 10.0f;
