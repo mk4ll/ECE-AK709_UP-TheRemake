@@ -834,18 +834,34 @@ void mainLoop() {
 		// update ropes
 		for (size_t i = 0; i < balloons.size(); ++i) {
 			if (!balloons[i]->isPopped()) {
-				float angle = (float)i / NUM_BALLOONS * 2.0f * 3.14159f;
+				float angle = (float)i / balloons.size() * 2.0f *
+					3.14159f; // use size() to be safe
 				float radius = 0.1f;
 				vec3 offset = vec3(cos(angle) * radius, 0.0f, sin(angle) * radius);
-				vec3 chimneyOffset = vec3(-0.18f, 5.0f, -2.0f);
-				vec3 anchorPos = housePhysics->getPosition() + chimneyOffset + offset;
+				vec3 chimneyPosLocal = vec3(-0.18f, 5.0f, -2.0f) + offset;
+
+				// Apply House Tilt and Rotation
+				// Must match House::draw transform order
+				mat4 R(1.0f);
+				float tiltAngle = housePhysics->getTiltAngle();
+				vec3 tiltAxis = housePhysics->getTiltAxis();
+				if (abs(tiltAngle) > 0.001f && length(tiltAxis) > 0.001f) {
+					R = glm::rotate(R, tiltAngle, tiltAxis);
+				}
+
+				float yaw = housePhysics->getRotation().y;
+				if (abs(yaw) > 0.001f) {
+					R = glm::rotate(R, yaw, vec3(0, 1, 0));
+				}
+
+				vec3 rotatedOffset = vec3(R * vec4(chimneyPosLocal, 1.0f));
+				vec3 anchorPos = housePhysics->getPosition() + rotatedOffset;
 
 				if (balloons[i]->isRopeAttached()) {
 					balloons[i]->updateAnchor(anchorPos);
 				}
 
-				ropeInstances[i]->updateBezier(anchorPos,
-					balloons[i]->getPosition(),
+				ropeInstances[i]->updateBezier(anchorPos, balloons[i]->getPosition(),
 					false, dt);
 			}
 
