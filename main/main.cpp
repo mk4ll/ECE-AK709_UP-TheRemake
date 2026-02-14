@@ -34,6 +34,8 @@
 #include <house/house.h>
 
 #include <beacon/beacon.h>
+// task 7
+
 
 using namespace std;
 using namespace glm;
@@ -269,6 +271,7 @@ void createContext() {
 	destinationBeacon = new Beacon(beaconPos, 4.0f, 40.0f);
 	// debugging 
 	printf("Beacon created at position: (%.2f, %.2f, %.2f)\n", beaconPos.x, beaconPos.y, beaconPos.z);
+
 
 	// banana obj for transparent balloon
 	bananaModel = new Drawable(std::string("../assets/models/banana.obj"));
@@ -779,6 +782,7 @@ void mainLoop() {
 
 		housePhysics->applyForces(balloons);
 		housePhysics->update(dt);
+
 
 		//beacon update
 		if (destinationBeacon) {
