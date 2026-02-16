@@ -8,7 +8,7 @@ Camera::Camera(GLFWwindow* window) : window(window) {
     position = vec3(0, 0, 5);
     horizontalAngle = 3.14f;
     verticalAngle = 0.0f;
-    FoV = 45.0f;
+    FoV = 50.0f;
     speed = 3.0f;
     mouseSpeed = 0.001f;
     fovSpeed = 2.0f;

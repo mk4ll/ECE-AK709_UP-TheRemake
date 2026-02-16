@@ -7,28 +7,19 @@
 using namespace glm;
 
 House::House(Drawable* mesh, const vec3& initialPosition)
-    : m_mesh(mesh),
-    m_initialPosition(initialPosition),
-    m_isFlying(false),
-    m_attachedBalloonCount(0),
-    m_liftPerBalloon(15.0f),
-    m_dragCoefficient(5.0f),
-    m_takeoffTimer(0.0f),
-    m_takeoffDelay(10.0f),
-    m_isTakingOff(false),
-    m_getTerrainHeight(nullptr),
-    m_rotation(0.0f),
-    m_angularVelocity(0.0f),
-    m_tiltAngle(0.0f),
-    m_tiltAxis(1.0f, 0.0f, 0.0f)
-{
+    : m_mesh(mesh), m_initialPosition(initialPosition), m_isFlying(false),
+    m_attachedBalloonCount(0), m_liftPerBalloon(25.0f),
+    m_dragCoefficient(5.0f), m_takeoffTimer(0.0f), m_takeoffDelay(10.0f),
+    m_isTakingOff(false), m_getTerrainHeight(nullptr), m_rotation(0.0f),
+    m_angularVelocity(0.0f), m_tiltAngle(0.0f), m_tiltAxis(1.0f, 0.0f, 0.0f) {
     m_body.position = initialPosition;
     m_body.velocity = vec3(0.0f);
     m_body.mass = HOUSE_MASS;
     m_body.force = vec3(0.0f);
 }
 
-void House::applyForces(const std::vector<Balloon*>& balloons, WindSystem* windSystem) {
+void House::applyForces(const std::vector<Balloon*>& balloons,
+    WindSystem* windSystem) {
     // Reset force accumulator
     m_body.force = vec3(0.0f);
 
@@ -59,20 +50,30 @@ void House::applyForces(const std::vector<Balloon*>& balloons, WindSystem* windS
         if (onGround && m_takeoffTimer < m_takeoffDelay) {
             // Building tension phase
             float tensionFactor = m_takeoffTimer / m_takeoffDelay;
-            float weakLift = m_attachedBalloonCount * m_liftPerBalloon * 0.3f * tensionFactor;
+            float weakLift =
+                m_attachedBalloonCount * m_liftPerBalloon * 0.3f * tensionFactor;
             m_body.applyForce(vec3(0.0f, weakLift, 0.0f));
-
             float groundFriction = -m_body.velocity.y * 100.0f;
             m_body.applyForce(vec3(0.0f, groundFriction, 0.0f));
+
+            // STRICTLY clamp horizontal position to initial position to prevent drift
+            m_body.position.x = m_initialPosition.x;
+            m_body.position.z = m_initialPosition.z;
+            m_body.velocity.x = 0.0f;
+            m_body.velocity.z = 0.0f;
         }
         else {
             // Taking off!
             m_isFlying = true;
 
             float liftupTime = m_takeoffTimer - m_takeoffDelay;
-            float liftupFactor = glm::clamp(liftupTime / 1.0f, 0.0f, 1.0f);
+            // Start from 30% lift (matching tension phase) to 100% lift over 5
+            // seconds
+            float rampProgress = glm::clamp(liftupTime / 5.0f, 0.0f, 1.0f);
+            float liftupFactor = glm::mix(0.3f, 1.0f, rampProgress);
 
-            float totalLift = m_attachedBalloonCount * m_liftPerBalloon * liftupFactor;
+            float totalLift =
+                m_attachedBalloonCount * m_liftPerBalloon * liftupFactor;
             vec3 liftForce = vec3(0.0f, totalLift, 0.0f);
             m_body.applyForce(liftForce);
         }
@@ -89,11 +90,16 @@ void House::applyForces(const std::vector<Balloon*>& balloons, WindSystem* windS
         m_body.applyForce(windForce);
     }
 
-    // 5. HEIGHT LIMIT
+    // 5. HEIGHT LIMIT (Soft Ceiling)
     float currentHeight = m_body.position.y - m_initialPosition.y;
     if (currentHeight > MAX_HEIGHT) {
         float excess = currentHeight - MAX_HEIGHT;
-        vec3 limitForce = vec3(0.0f, -excess * 50.0f, 0.0f);
+        // Spring force (push down)
+        vec3 limitForce = vec3(0.0f, -excess * 20.0f, 0.0f);
+        // Damping force (resist upward velocity) to prevent bouncing
+        if (m_body.velocity.y > 0.0f) {
+            limitForce.y -= m_body.velocity.y * 5.0f;
+        }
         m_body.applyForce(limitForce);
     }
 }
@@ -103,11 +109,13 @@ void House::update(float dt) {
         m_takeoffTimer += dt;
     }
 
+    // Update rotation and tilt based on forces (must be done BEFORE integration
+    // clears forces)
+    updateTiltPhysics(dt);
+
     // Integrate physics
     m_body.integrate(dt);
 
-    // Update rotation and tilt based on velocity
-    updateTiltPhysics(dt);
     updateRotation(dt);
 
     // TERRAIN COLLISION
@@ -115,13 +123,11 @@ void House::update(float dt) {
         const float halfWidth = HOUSE_WIDTH * 0.5f;
         const float halfDepth = HOUSE_DEPTH * 0.5f;
 
-        vec3 corners[5] = {
-            m_body.position + vec3(-halfWidth, 0, -halfDepth),
-            m_body.position + vec3(halfWidth, 0, -halfDepth),
-            m_body.position + vec3(-halfWidth, 0, halfDepth),
-            m_body.position + vec3(halfWidth, 0, halfDepth),
-            m_body.position
-        };
+        vec3 corners[5] = { m_body.position + vec3(-halfWidth, 0, -halfDepth),
+                           m_body.position + vec3(halfWidth, 0, -halfDepth),
+                           m_body.position + vec3(-halfWidth, 0, halfDepth),
+                           m_body.position + vec3(halfWidth, 0, halfDepth),
+                           m_body.position };
 
         float maxTerrainHeight = -1e6f;
         for (int i = 0; i < 5; ++i) {
@@ -162,35 +168,56 @@ void House::update(float dt) {
 }
 
 void House::updateTiltPhysics(float dt) {
-    if (!m_isFlying) {
+    if (!m_isFlying || m_body.position.y <= m_initialPosition.y + 0.5f) {
         // On ground - gradually return to upright
         m_angularVelocity *= 0.9f;
         m_tiltAngle *= 0.9f;
         return;
     }
+    // Calculate desired tilt
+    // STRATEGY: Combine Velocity and Force for responsiveness.
+    // 1. Velocity gives the "steady state" tilt (banking in a turn).
+    // 2. Force gives the "immediate" tilt (initial lurch when accelerating).
 
-    // Calculate desired tilt from horizontal velocity
     vec3 horizontalVel = vec3(m_body.velocity.x, 0.0f, m_body.velocity.z);
-    float speed = length(horizontalVel);
+    vec3 horizontalForce = vec3(m_body.force.x, 0.0f, m_body.force.z);
 
-    if (speed > 0.1f) {
-        // Tilt in direction of movement (like a leaning into a turn)
-        vec3 moveDir = normalize(horizontalVel);
+    vec3 tiltTargetDir = vec3(0.0f);
+    float tiltMagnitude = 0.0f;
 
-        // Desired tilt angle proportional to speed
-        float desiredTilt = glm::clamp(speed * TILT_RESPONSE, 0.0f, MAX_TILT_ANGLE);
+    if (length(horizontalForce) > 1.0f) {
+        // High force applied? Tilt in that direction!
+        tiltTargetDir = normalize(horizontalForce);
+        tiltMagnitude =
+            length(horizontalForce) * 0.05f; // Scaling factor for force-based tilt
+    }
+    else if (length(horizontalVel) > 0.1f) {
+        // Moving fast? Tilt in direction of movement
+        tiltTargetDir = normalize(horizontalVel);
+        tiltMagnitude = length(horizontalVel) * TILT_RESPONSE;
+    }
 
-        // Tilt axis perpendicular to movement (right hand rule)
-        vec3 desiredTiltAxis = normalize(cross(vec3(0, 1, 0), moveDir));
+    // Clamp magnitude
+    if (tiltMagnitude > 0.001f) {
+        // Tilt axis perpendicular to target direction
+        // FIX: Swapped cross product order to fix inverted tilt (inverted right
+        // hand rule)
+        vec3 desiredTiltAxis = normalize(cross(vec3(0, 1, 0), tiltTargetDir));
+
+        // Smoothly blend axis (avoid instant snaps)
+        // Only update axis if we have a valid target
+        m_tiltAxis = normalize(glm::mix(m_tiltAxis, desiredTiltAxis, 5.0f * dt));
 
         // Smoothly interpolate to desired tilt
-        float angleDiff = desiredTilt - m_tiltAngle;
-        m_angularVelocity += desiredTiltAxis * angleDiff * 2.0f * dt;
+        // Use m_body.force to see if we are actively steering -> faster response
+        float responseSpeed = (length(horizontalForce) > 1.0f) ? 5.0f : 2.0f;
 
-        m_tiltAxis = desiredTiltAxis;
+        float angleDiff = tiltMagnitude - m_tiltAngle;
+        m_angularVelocity += m_tiltAxis * angleDiff * responseSpeed * dt;
+
     }
     else {
-        // No movement - return to upright
+        // No movement/force - return to upright
         m_angularVelocity -= m_angularVelocity * 2.0f * dt;
     }
 
@@ -205,7 +232,7 @@ void House::updateTiltPhysics(float dt) {
     }
     else {
         // Gradually return to zero tilt
-        m_tiltAngle *= 0.95f;
+        m_tiltAngle *= 0.75f;
     }
 }
 

@@ -155,6 +155,11 @@ add_executable(main
 
   navigation/autopilot.cpp
   navigation/autopilot.h
+  navigation/userNav.cpp
+  navigation/userNav.h
+
+  enemies/bird.cpp 
+  enemies/bird.h
 
   render/render.cpp
   render/render.h
