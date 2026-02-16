@@ -51,8 +51,8 @@ void mainLoop();
 void free();
 float getTerrainHeightAt(float x, float z);
 
-#define W_WIDTH 1024
-#define W_HEIGHT 768
+#define W_WIDTH 1920
+#define W_HEIGHT 1440
 #define TITLE "UP - The Remake"
 
 #define SHADOW_WIDTH 1024
@@ -99,6 +99,10 @@ GLuint skyboxVPLocation, skyboxTextureSampler;
 GLuint skyboxTexture;
 Drawable* skyboxSphere = nullptr;
 
+// task 8
+// house crash
+bool houseCrashed = false;
+ParticleSystem* crashParticles = nullptr;
 //
 // task2: balloons
 Drawable* balloon;
@@ -593,6 +597,12 @@ void free() {
         skyboxSphere = nullptr;
     }
 
+    // del crash particles
+    if (crashParticles) {
+        delete crashParticles;
+        crashParticles = nullptr;
+    }
+
     glfwTerminate();
 }
 
@@ -640,12 +650,15 @@ void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
         cactusModel->draw();
     }
 
-    // house
-    mat4 houseModelMatrix = mat4(1.0f);
-    houseModelMatrix = translate(houseModelMatrix, housePhysics->getPosition());
-    glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &houseModelMatrix[0][0]);
-    house->bind();
-    house->draw();
+    // house (skip if crashed)
+    if (!houseCrashed) {
+        mat4 houseModelMatrix = mat4(1.0f);
+        houseModelMatrix = translate(houseModelMatrix, housePhysics->getPosition());
+        glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE,
+            &houseModelMatrix[0][0]);
+        house->bind();
+        house->draw();
+    }
 
     // balloons
     for (size_t i = 0; i < balloons.size(); ++i) {
@@ -792,7 +805,9 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
     glUniform1i(useTextureLocation, 1);
 
-    housePhysics->draw(modelMatrixLocation);
+    if (!houseCrashed) {
+        housePhysics->draw(modelMatrixLocation);
+    }
 
     // Draw cacti
     glActiveTexture(GL_TEXTURE0);
@@ -899,6 +914,17 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
         glDepthMask(GL_TRUE);
     }
+
+    // draw crash particles
+    if (crashParticles) {
+        glDepthMask(GL_FALSE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        crashParticles->draw(modelMatrixLocation, balloon);
+
+        glDepthMask(GL_TRUE);
+    }
 }
 
 // Task 2.3: visualize the depth_map on a sub-window at the top of the screen
@@ -987,12 +1013,12 @@ void mainLoop() {
         lastTime = glfwGetTime();
 
         // static vars to store key-pressed values
+        static bool keyV_wasPressed = false;
         static bool keyN_wasPressed = false;
-        static bool keyM_wasPressed = false;
 
-        // release
-        bool keyN_isPressed = (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS);
-        if (keyN_isPressed && !keyN_wasPressed) {
+        // release (V key)
+        bool keyV_isPressed = (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS);
+        if (keyV_isPressed && !keyV_wasPressed) {
             // first available balloon to be released
             for (size_t i = 0; i < balloons.size(); ++i) {
                 if (balloons[i]->isRopeAttached() && !balloons[i]->isPopped()) {
@@ -1002,26 +1028,30 @@ void mainLoop() {
                 }
             }
         }
-        keyN_wasPressed = keyN_isPressed; // save state
+        keyV_wasPressed = keyV_isPressed; // save state
 
-        // pop
-        bool keyM_isPressed = (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS);
-        if (keyM_isPressed && !keyM_wasPressed) {
-            // first available balloon to be popped
+        // pop ALL (N key)
+        bool keyN_isPressed = (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS);
+        if (keyN_isPressed && !keyN_wasPressed) {
+            // pop ALL attached balloons at once
             for (size_t i = 0; i < balloons.size(); ++i) {
                 if (!balloons[i]->isPopped() && balloons[i]->isRopeAttached()) {
                     balloons[i]->pop();
-                    if (popParticles) {
+                    printf("Balloon %zu POPPED!\n", i);
+                }
+            }
+            // spawn particles for the last popped balloon
+            for (int i = (int)balloons.size() - 1; i >= 0; --i) {
+                if (balloons[i]->isPopped()) {
+                    if (popParticles)
                         delete popParticles;
-                    }
                     popParticles = new ParticleSystem(balloons[i]->getPosition(),
                         balloons[i]->getColor());
-                    printf("Balloon %zu POPPED!\n", i);
                     break;
                 }
             }
         }
-        keyM_wasPressed = keyM_isPressed; // save state
+        keyN_wasPressed = keyN_isPressed; // save state
 
         if (popParticles) {
             popParticles->update(dt);
@@ -1029,6 +1059,11 @@ void mainLoop() {
                 delete popParticles;
                 popParticles = nullptr;
             }
+        }
+
+        // update crash particles (persistent, never deleted)
+        if (crashParticles) {
+            crashParticles->update(dt);
         }
 
         // update all balloons
@@ -1070,11 +1105,15 @@ void mainLoop() {
         }
 
         // --- PHYSICS STEP START ---
+        // Track velocity before physics update for crash detection
+        vec3 preUpdateVelocity = housePhysics->getVelocity();
+
         // 1. Apply House Internal Forces (Gravity, Lift, Drag)
         // IMPORTANT: This resets m_body.force to 0 and applies internal forces, so
         // it MUST be called first!
-        housePhysics->applyForces(balloons, nullptr);
-
+        if (!houseCrashed) {
+            housePhysics->applyForces(balloons, nullptr);
+        }
         vec3 houseMin = peak + vec3(-10.0f, 0.0f, -10.0f);
         vec3 houseMax = peak + vec3(10.0f, 10.0f, 10.0f);
 
@@ -1113,19 +1152,37 @@ void mainLoop() {
             }
 
             // Physics Update (Autopilot mode)
-            housePhysics->update(dt);
-
+            if (!houseCrashed) { housePhysics->update(dt); }
         }
         else {
             // --- USER NAVIGATION MODE ---
             // 1. Input (Forces)
-            userNav.handleInput(housePhysics, camera, dt, window);
+            if (!houseCrashed) { userNav.handleInput(housePhysics, camera, dt, window); }
 
             // 2. Physics Update (Move House based on forces)
-            housePhysics->update(dt);
+            if (!houseCrashed) { housePhysics->update(dt); }
 
             // 3. Update Camera (Snap to NEW House Position)
             userNav.updateCamera(housePhysics, camera, dt);
+        }
+
+        // --- CRASH DETECTION ---
+        if (!houseCrashed && preUpdateVelocity.y < -8.0f) {
+            // Check if house is now on/in the ground
+            float terrainH = getTerrainHeightAt(housePhysics->getPosition().x,
+                housePhysics->getPosition().z);
+            if (housePhysics->getPosition().y <= terrainH + 1.0f) {
+                houseCrashed = true;
+                crashParticles = ParticleSystem::createCrashExplosion(
+                    housePhysics->getPosition(), 200);
+                printf("HOUSE CRASHED! Velocity was %.2f\n", preUpdateVelocity.y);
+                // Release all remaining balloons
+                for (size_t i = 0; i < balloons.size(); ++i) {
+                    if (!balloons[i]->isPopped() && balloons[i]->isRopeAttached()) {
+                        balloons[i]->release();
+                    }
+                }
+            }
         }
 
         if (destinationBeacon)
