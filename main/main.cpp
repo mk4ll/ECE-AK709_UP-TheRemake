@@ -93,6 +93,12 @@ glm::vec3 cactusPositions[NUM_CACTI];
 float cactusRotations[NUM_CACTI];
 float cactusScales[NUM_CACTI];
 
+// skybox
+GLuint skyboxProgram;
+GLuint skyboxVPLocation, skyboxTextureSampler;
+GLuint skyboxTexture;
+Drawable* skyboxSphere = nullptr;
+
 //
 // task2: balloons
 Drawable* balloon;
@@ -218,6 +224,59 @@ void uploadBirdMaterial(const ogl::Material& mtl) {
     glUniform1f(NsLocation, mtl.Ns);
 }
 
+// inverted UV sphere for the skybox
+Drawable* generateSkySphere(int stacks, int slices, float radius) {
+    using namespace glm;
+    std::vector<vec3> vertices;
+    std::vector<vec2> uvs;
+    std::vector<vec3> normals;
+
+    for (int i = 0; i < stacks; ++i) {
+        float phi0 = 3.14159265f * (float)i / stacks;
+        float phi1 = 3.14159265f * (float)(i + 1) / stacks;
+        for (int j = 0; j < slices; ++j) {
+            float theta0 = 2.0f * 3.14159265f * (float)j / slices;
+            float theta1 = 2.0f * 3.14159265f * (float)(j + 1) / slices;
+
+            vec3 p00 = radius * vec3(sin(phi0) * cos(theta0), cos(phi0),
+                sin(phi0) * sin(theta0));
+            vec3 p01 = radius * vec3(sin(phi0) * cos(theta1), cos(phi0),
+                sin(phi0) * sin(theta1));
+            vec3 p10 = radius * vec3(sin(phi1) * cos(theta0), cos(phi1),
+                sin(phi1) * sin(theta0));
+            vec3 p11 = radius * vec3(sin(phi1) * cos(theta1), cos(phi1),
+                sin(phi1) * sin(theta1));
+
+            float u0 = 1.0f - (float)j / slices; // flip U for inside view
+            float u1 = 1.0f - (float)(j + 1) / slices;
+            float v0 = 1.0f - (float)i / stacks; // flip V
+            float v1 = 1.0f - (float)(i + 1) / stacks;
+
+            // Inverted winding for inside view
+            vertices.push_back(p00);
+            uvs.push_back(vec2(u0, v0));
+            normals.push_back(-normalize(p00));
+            vertices.push_back(p10);
+            uvs.push_back(vec2(u0, v1));
+            normals.push_back(-normalize(p10));
+            vertices.push_back(p01);
+            uvs.push_back(vec2(u1, v0));
+            normals.push_back(-normalize(p01));
+
+            vertices.push_back(p01);
+            uvs.push_back(vec2(u1, v0));
+            normals.push_back(-normalize(p01));
+            vertices.push_back(p10);
+            uvs.push_back(vec2(u0, v1));
+            normals.push_back(-normalize(p10));
+            vertices.push_back(p11);
+            uvs.push_back(vec2(u1, v1));
+            normals.push_back(-normalize(p11));
+        }
+    }
+    return new Drawable(vertices, uvs, normals);
+}
+
 void createContext() {
     // Create and compile our GLSL program from the shader
     shaderProgram = loadShaders("../shaders/ShadowMapping.vertexshader",
@@ -278,6 +337,18 @@ void createContext() {
     // --- miniMapProgram ---
     quadTextureSamplerLocation =
         glGetUniformLocation(miniMapProgram, "textureSampler");
+
+    // --- skyboxProgram ---
+    skyboxProgram = loadShaders("../shaders/Skybox.vertexshader",
+        "../shaders/Skybox.fragmentshader");
+    skyboxVPLocation = glGetUniformLocation(skyboxProgram, "VP");
+    skyboxTextureSampler = glGetUniformLocation(skyboxProgram, "skyTexture");
+
+    // Load skybox texture and generate sky sphere
+    skyboxTexture = loadSOIL(
+        "../assets/desert_skybox_2/textures/Cartoon_Desert2_baseColor.bmp");
+    skyboxSphere = generateSkySphere(32, 64, 90.0f);
+    printf("Skybox loaded\n");
 
     // Loading a model
     // loading a diffuse and a specular texture
@@ -514,6 +585,13 @@ void free() {
     glDeleteProgram(shaderProgram);
     glDeleteProgram(depthProgram);
     glDeleteProgram(miniMapProgram);
+    glDeleteProgram(skyboxProgram);
+
+    // del skybox
+    if (skyboxSphere) {
+        delete skyboxSphere;
+        skyboxSphere = nullptr;
+    }
 
     glfwTerminate();
 }
@@ -598,6 +676,26 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
     // Step 2: Clearing color and depth info
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+    // --- Draw Skybox first ---
+    glDepthMask(GL_FALSE);
+    glDisable(GL_CULL_FACE);
+    glUseProgram(skyboxProgram);
+
+    mat4 skyView = mat4(mat3(viewMatrix)); // strip translation
+    mat4 skyVP = projectionMatrix * skyView;
+    glUniformMatrix4fv(skyboxVPLocation, 1, GL_FALSE, &skyVP[0][0]);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, skyboxTexture);
+    glUniform1i(skyboxTextureSampler, 0);
+
+    skyboxSphere->bind();
+    skyboxSphere->draw();
+
+    glEnable(GL_CULL_FACE);
+    glDepthMask(GL_TRUE);
 
     // Step 3: Selecting shader program
     glUseProgram(shaderProgram);
@@ -1153,7 +1251,8 @@ void initialize() {
     glfwSetCursorPos(window, W_WIDTH / 2, W_HEIGHT / 2);
 
     // Sky blue background color
-    glClearColor(0.53f, 0.81f, 0.92f, 0.0f);
+    //glClearColor(0.53f, 0.81f, 0.92f, 0.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);

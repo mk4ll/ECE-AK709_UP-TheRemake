@@ -437,6 +437,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </None>
     <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\ShadowMapping.vertexshader">
     </None>
+    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\Skybox.fragmentshader">
+    </None>
+    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\Skybox.vertexshader">
+    </None>
     <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\Depth.fragmentshader">
     </None>
     <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\Depth.vertexshader">

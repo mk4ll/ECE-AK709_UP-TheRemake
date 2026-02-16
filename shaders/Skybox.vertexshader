@@ -1,0 +1,14 @@
+#version 330 core
+
+layout(location = 0) in vec3 vertexPosition;
+layout(location = 1) in vec3 vertexNormal; // unused but must match Drawable layout
+layout(location = 2) in vec2 vertexUV;
+
+out vec2 fragUV;
+
+uniform mat4 VP;
+
+void main() {
+    fragUV = vertexUV;
+    gl_Position = VP * vec4(vertexPosition, 1.0);
+}

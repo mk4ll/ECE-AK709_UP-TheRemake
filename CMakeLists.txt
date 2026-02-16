@@ -166,6 +166,8 @@ add_executable(main
 
   shaders/ShadowMapping.fragmentshader
   shaders/ShadowMapping.vertexshader
+  shaders/Skybox.fragmentshader
+  shaders/Skybox.vertexshader
   shaders/Depth.fragmentshader
   shaders/Depth.vertexshader
   shaders/MiniMap.fragmentshader

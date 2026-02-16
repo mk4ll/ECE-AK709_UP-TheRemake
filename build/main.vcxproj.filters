@@ -173,6 +173,12 @@
     <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\ShadowMapping.vertexshader">
       <Filter>shaders</Filter>
     </None>
+    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\Skybox.fragmentshader">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\Skybox.vertexshader">
+      <Filter>shaders</Filter>
+    </None>
     <None Include="D:\HMTY\7ο ΕΞΑΜΗΝΟ\ΓΡΑΦΙΚΑ\UP_the_remake\shaders\Depth.fragmentshader">
       <Filter>shaders</Filter>
     </None>
