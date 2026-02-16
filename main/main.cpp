@@ -38,6 +38,8 @@
 #include "navigation/autopilot.h"
 // task 7
 #include "navigation/userNav.h"
+// task 6: bird enemies
+#include "enemies/bird.h"
 
 using namespace std;
 using namespace glm;
@@ -82,6 +84,15 @@ GLuint waterDiffuseTexture, waterSpecularTexture;
 GLuint waterDuDvTexture;
 //
 
+// cacti decoration - basically addition to the terrain
+Drawable* cactusModel = nullptr;
+GLuint cactusDiffuseTexture;
+GLuint cactusSpecularTexture;
+const int NUM_CACTI = 6;
+glm::vec3 cactusPositions[NUM_CACTI];
+float cactusRotations[NUM_CACTI];
+float cactusScales[NUM_CACTI];
+
 //
 // task2: balloons
 Drawable* balloon;
@@ -94,6 +105,12 @@ vector<RopeInstance*> ropeInstances;
 const int NUM_BALLOONS = 15; // AMOUNT OF BALLOONS
 
 ParticleSystem* popParticles = nullptr;
+
+// task 6: bird enemies
+const int BIRD_FRAME_COUNT = 21;
+const int NUM_BIRDS = 10;
+Drawable* birdFrames[BIRD_FRAME_COUNT];
+std::vector<Bird*> birds;
 
 // task 5: autopilot to beacon
 Beacon* destinationBeacon = nullptr;
@@ -160,6 +177,13 @@ const Material beaconMaterial{
     32.0f                          // Ns - high shininess
 };
 
+const Material birdMaterial = {
+    vec4(0.15f, 0.15f, 0.15f, 1.0f), // Ka
+    vec4(0.4f, 0.35f, 0.3f, 1.0f),   // Kd
+    vec4(0.1f, 0.1f, 0.1f, 1.0f),    // Ks
+    10.0f                            // Ns
+};
+
 // NOTE: Since the Light and Material struct are used in the shader programs as
 // well
 //		 it is recommended to create a function that will update all the
@@ -180,6 +204,14 @@ void uploadLight(const Light& light) {
 // Creating a function to upload the material parameters of a model to the
 // shader program
 void uploadMaterial(const Material& mtl) {
+    glUniform4f(KaLocation, mtl.Ka.r, mtl.Ka.g, mtl.Ka.b, mtl.Ka.a);
+    glUniform4f(KdLocation, mtl.Kd.r, mtl.Kd.g, mtl.Kd.b, mtl.Kd.a);
+    glUniform4f(KsLocation, mtl.Ks.r, mtl.Ks.g, mtl.Ks.b, mtl.Ks.a);
+    glUniform1f(NsLocation, mtl.Ns);
+}
+
+// Task 6: material upload callback for ogl::Model (reads from .mtl)
+void uploadBirdMaterial(const ogl::Material& mtl) {
     glUniform4f(KaLocation, mtl.Ka.r, mtl.Ka.g, mtl.Ka.b, mtl.Ka.a);
     glUniform4f(KdLocation, mtl.Kd.r, mtl.Kd.g, mtl.Kd.b, mtl.Kd.a);
     glUniform4f(KsLocation, mtl.Ks.r, mtl.Ks.g, mtl.Ks.b, mtl.Ks.a);
@@ -285,6 +317,35 @@ void createContext() {
     // banana obj for transparent balloon
     bananaModel = new Drawable(std::string("../assets/models/banana.obj"));
 
+    // Load cactus model and texture
+    cactusModel = new Drawable("../assets/models/cactus.obj");
+    cactusDiffuseTexture = loadSOIL("../assets/textures/cactus_Albedo.bmp");
+	cactusSpecularTexture = loadSOIL("../assets/textures/cactus_Rough.bmp");
+
+    // Left tepui spans x ~ [-40,-20], right tepui x ~ [16,44].
+    // River canyon is at x ~ 0. So valid low-ground bands:
+    // left bank:  x in [-16, -6]  (between left tepui edge and canyon)
+    // right bank: x in [6, 13]    (between canyon and right tepui edge)
+    // {x, z} — left bank (4 cacti) and right bank (4 cacti)
+    float cactusSpots[][2] = { {-15.0f, 15.0f}, {-16.0f, -5.0f}, {-20.0f, 35.0f},
+                               {-3.0f, -45.0f}, {8.0f, -19.0f}, {9.0f, 15.0f},
+                             };
+    srand(42); // deterministic
+    for (int i = 0; i < NUM_CACTI; ++i) {
+        float cx = cactusSpots[i][0];
+        float cz = cactusSpots[i][1];
+        float cy = getTerrainHeightAt(cx, cz) + 2.0f;
+        if (i == 3) {
+            cx += 1.0f;
+            cy += 2.0f; // elevate the far left cactus futher
+        }
+        cactusPositions[i] = vec3(cx, cy, cz);
+        cactusRotations[i] = (float)(rand() % 360);
+        cactusScales[i] = 0.8f + (rand() % 5) * 0.1f; // 0.8 to 1.2
+        printf("Cactus %d at (%.1f, %.1f, %.1f) scale=%.1f\n", i, cx, cy, cz,
+            cactusScales[i]);
+    }
+
     //
     // multiple balloons
     vec3 chimneyOffset = vec3(-0.18f, 5.0f, -2.0f);
@@ -316,6 +377,35 @@ void createContext() {
         // debug info
         printf("Created balloon %d: %s\n", i, getBalloonTypeName(type));
     }
+
+    // Task 6: Load bird animation frames and spawn birds
+
+    char path[256];
+    for (int i = 0; i < BIRD_FRAME_COUNT; ++i) {
+        sprintf(path, "../assets/bird_anim/bird%02d.obj", i + 1);
+        birdFrames[i] = new Drawable(path);
+        printf("Loaded bird frame %d: %s\n", i + 1, path);
+    }
+
+    // Spawn birds in fixed orbits over the river area
+    vec3 riverCenter = vec3(0.0f, 0.0f, 0.0f); // approximate center
+    float flyHeight = peak.y + 15.0f;          // fly above the terrain peak
+    float orbitRadius = 25.0f;
+    float birdSpeed = 0.8f; // radians/sec
+
+
+    for (int i = 0; i < NUM_BIRDS; ++i) {
+        float startAngle = (float)i / NUM_BIRDS * 6.28318f;
+        float r = orbitRadius + (i % 3) * 5.0f;
+        float s = birdSpeed + (i % 2) * 0.3f;
+        float h = flyHeight + (i % 3) * 3.0f;
+
+        birds.push_back(new Bird(birdFrames, BIRD_FRAME_COUNT, riverCenter, r, s, h,
+            startAngle));
+        printf("Spawned bird %d at angle %.2f, radius %.1f, height %.1f\n", i,
+            startAngle, r, h);
+    }
+    
 
     // ----------------------------------------------------------------------------
     // //
@@ -402,6 +492,24 @@ void free() {
         destinationBeacon = nullptr;
     }
 
+    // del birds
+    for (auto* b : birds) {
+        delete b;
+    }
+    birds.clear();
+    for (int i = 0; i < BIRD_FRAME_COUNT; ++i) {
+        if (birdFrames[i]) {
+            delete birdFrames[i];
+            birdFrames[i] = nullptr;
+        }
+    }
+
+    // del cacti
+    if (cactusModel) {
+        delete cactusModel;
+        cactusModel = nullptr;
+    }
+
     // Delete Shader Programs
     glDeleteProgram(shaderProgram);
     glDeleteProgram(depthProgram);
@@ -444,6 +552,16 @@ void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
     river->bind();
     river->draw();
 
+    // cacti (depth pass for shadows)
+    for (int i = 0; i < NUM_CACTI; ++i) {
+        mat4 cactusM = translate(mat4(1.0f), cactusPositions[i]);
+        cactusM = rotate(cactusM, radians(cactusRotations[i]), vec3(0, 1, 0));
+        cactusM = scale(cactusM, vec3(cactusScales[i]));
+        glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &cactusM[0][0]);
+        cactusModel->bind();
+        cactusModel->draw();
+    }
+
     // house
     mat4 houseModelMatrix = mat4(1.0f);
     houseModelMatrix = translate(houseModelMatrix, housePhysics->getPosition());
@@ -460,6 +578,11 @@ void depth_pass(mat4 viewMatrix, mat4 projectionMatrix) {
         glUniformMatrix4fv(shadowModelLocation, 1, GL_FALSE, &balloonM[0][0]);
         balloon->bind();
         balloon->draw();
+    }
+
+    // birds (depth pass for shadows)
+    for (auto* bird : birds) {
+        bird->draw(shadowModelLocation);
     }
 
     // binding the default framebuffer again
@@ -573,6 +696,21 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
 
     housePhysics->draw(modelMatrixLocation);
 
+    // Draw cacti
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, cactusDiffuseTexture);
+    glUniform1i(diffuseColorSampler, 0);
+    glUniform1i(useTextureLocation, 1);
+
+    for (int i = 0; i < NUM_CACTI; ++i) {
+        mat4 cactusM = translate(mat4(1.0f), cactusPositions[i]);
+        cactusM = rotate(cactusM, radians(cactusRotations[i]), vec3(0, 1, 0));
+        cactusM = scale(cactusM, vec3(cactusScales[i]));
+        glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &cactusM[0][0]);
+        cactusModel->bind();
+        cactusModel->draw();
+    }
+
     // multiple balloons
     glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, &mat4(1.0f)[0][0]);
     uploadMaterial(ropeMaterial);
@@ -640,6 +778,14 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
         // Reset beacon flag
         glUniform1i(isBeaconLocation, 0);
         glDepthMask(GL_TRUE);
+    }
+
+    // Task 6: Draw birds
+    uploadMaterial(birdMaterial);
+    glUniform1i(useTextureLocation, 0);
+
+    for (auto* bird : birds) {
+        bird->draw(modelMatrixLocation);
     }
 
     // reset for particles
@@ -793,6 +939,36 @@ void mainLoop() {
         for (size_t i = 0; i < balloons.size(); ++i) {
             balloons[i]->applyForces();
             balloons[i]->update(dt);
+        }
+
+        // Task 6: Update birds and check bird-balloon collisions
+        for (auto* bird : birds) {
+            bird->update(dt);
+
+            // Check collision with each balloon
+            for (size_t i = 0; i < balloons.size(); ++i) {
+                if (balloons[i]->isPopped())
+                    continue;
+
+                Sphere birdSphere;
+                birdSphere.x = bird->getPosition();
+                birdSphere.r = bird->getCollisionRadius();
+
+                Sphere balloonSphere;
+                balloonSphere.x = balloons[i]->getPosition();
+                balloonSphere.r = balloons[i]->getRadius();
+
+                if (checkSphereSphereCollision(birdSphere, balloonSphere)) {
+                    balloons[i]->pop();
+                    // Spawn pop particles
+                    if (popParticles)
+                        delete popParticles;
+                    popParticles = new ParticleSystem(balloons[i]->getPosition(),
+                        balloons[i]->getColor());
+                    printf("Bird popped balloon %zu!\n", i);
+                    break; // One pop per bird per frame
+                }
+            }
         }
 
         // --- PHYSICS STEP START ---
@@ -1014,8 +1190,8 @@ void initialize() {
     light = new Light( window,
         vec4{1, 1, 1, 1},
         vec4{1, 1, 1, 1},
-        vec4{ 1, 1, 1, 1 },
-        vec3{0, peak.y + 30, 30}
+        vec4{ 1, 1, 1, 1},
+        vec3{0, peak.y + 30, 50}
         // over the house and over the peak
     );
 }

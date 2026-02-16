@@ -8,7 +8,7 @@ using namespace glm;
 
 House::House(Drawable* mesh, const vec3& initialPosition)
     : m_mesh(mesh), m_initialPosition(initialPosition), m_isFlying(false),
-    m_attachedBalloonCount(0), m_liftPerBalloon(25.0f),
+    m_attachedBalloonCount(0), m_liftPerBalloon(15.0f),
     m_dragCoefficient(5.0f), m_takeoffTimer(0.0f), m_takeoffDelay(10.0f),
     m_isTakingOff(false), m_getTerrainHeight(nullptr), m_rotation(0.0f),
     m_angularVelocity(0.0f), m_tiltAngle(0.0f), m_tiltAxis(1.0f, 0.0f, 0.0f) {
