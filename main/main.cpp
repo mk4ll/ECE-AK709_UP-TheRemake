@@ -70,9 +70,8 @@ struct Material {
 GLFWwindow* window;
 Camera* camera;
 Light* light;
-GLuint shaderProgram, depthProgram, miniMapProgram;
+GLuint shaderProgram, depthProgram;
 GLuint depthFBO, depthTexture;
-Drawable* quad;
 //
 // task 1
 Drawable* house;
@@ -154,8 +153,6 @@ GLuint dudvSampler;
 GLuint shadowViewProjectionLocation;
 GLuint shadowModelLocation;
 
-// locations for miniMapProgram
-GLuint quadTextureSamplerLocation;
 
 // Terrain material
 const Material martianTerrain{
@@ -294,8 +291,7 @@ void createContext() {
 
     // Task 2.1
     // Use the MiniMap.vertexshader, "MiniMap.fragmentshader"
-    miniMapProgram = loadShaders("../shaders/MiniMap.vertexshader",
-        "../shaders/MiniMap.fragmentshader");
+    //miniMapProgram = loadShaders("../shaders/MiniMap.vertexshader", "../shaders/MiniMap.fragmentshader");
 
     // NOTE: Don't forget to delete the shader programs on the free() function
 
@@ -339,8 +335,8 @@ void createContext() {
     shadowModelLocation = glGetUniformLocation(depthProgram, "M");
 
     // --- miniMapProgram ---
-    quadTextureSamplerLocation =
-        glGetUniformLocation(miniMapProgram, "textureSampler");
+    //quadTextureSamplerLocation =
+    //    glGetUniformLocation(miniMapProgram, "textureSampler");
 
     // --- skyboxProgram ---
     skyboxProgram = loadShaders("../shaders/Skybox.vertexshader",
@@ -588,7 +584,6 @@ void free() {
     // Delete Shader Programs
     glDeleteProgram(shaderProgram);
     glDeleteProgram(depthProgram);
-    glDeleteProgram(miniMapProgram);
     glDeleteProgram(skyboxProgram);
 
     // del skybox
@@ -929,20 +924,6 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
     }
 }
 
-// Task 2.3: visualize the depth_map on a sub-window at the top of the screen
-void renderMiniMap() {
-    // using the correct shaders to visualize the depth texture on the quad
-    glUseProgram(miniMapProgram);
-
-    // enabling the texture - follow the aforementioned pipeline
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, depthTexture);
-    glUniform1i(quadTextureSamplerLocation, 0);
-
-    // Drawing the quad
-    quad->bind();
-    quad->draw();
-}
 
 // collision detection: BALLOONS
 void handleBalloonCollisions() {

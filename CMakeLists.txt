@@ -144,8 +144,6 @@ add_executable(main
   physics/collisionShapes.h
   physics/collision.cpp
   physics/collision.h
-  physics/physicsWorld.cpp
-  physics/physicsWorld.h
   physics/forces.h
 
   particles/particle.cpp
@@ -161,17 +159,12 @@ add_executable(main
   enemies/bird.cpp 
   enemies/bird.h
 
-  render/render.cpp
-  render/render.h
-
   shaders/ShadowMapping.fragmentshader
   shaders/ShadowMapping.vertexshader
   shaders/Skybox.fragmentshader
   shaders/Skybox.vertexshader
   shaders/Depth.fragmentshader
   shaders/Depth.vertexshader
-  shaders/MiniMap.fragmentshader
-  shaders/MiniMap.vertexshader
   )
 target_link_libraries(main
   ${ALL_LIBS}
