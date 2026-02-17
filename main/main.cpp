@@ -55,8 +55,8 @@ float getTerrainHeightAt(float x, float z);
 #define W_HEIGHT 1440
 #define TITLE "UP - The Remake"
 
-#define SHADOW_WIDTH 1024
-#define SHADOW_HEIGHT 1024
+#define SHADOW_WIDTH 4096
+#define SHADOW_HEIGHT 4096
 
 // Creating a structure to store the material parameters of an object
 struct Material {
@@ -88,7 +88,7 @@ GLuint waterDuDvTexture;
 Drawable* cactusModel = nullptr;
 GLuint cactusDiffuseTexture;
 GLuint cactusSpecularTexture;
-const int NUM_CACTI = 6;
+const int NUM_CACTI = 6;                                                             // AMOUNT OF CACTI
 glm::vec3 cactusPositions[NUM_CACTI];
 float cactusRotations[NUM_CACTI];
 float cactusScales[NUM_CACTI];
@@ -112,13 +112,13 @@ Drawable* bananaModel;
 
 vector<Balloon*> balloons;
 vector<RopeInstance*> ropeInstances;
-const int NUM_BALLOONS = 15; // AMOUNT OF BALLOONS
+const int NUM_BALLOONS = 15;                                                        // AMOUNT OF BALLOONS
 
-ParticleSystem* popParticles = nullptr;
+vector<ParticleSystem*> popParticles;
 
 // task 6: bird enemies
 const int BIRD_FRAME_COUNT = 21;
-const int NUM_BIRDS = 10;
+const int NUM_BIRDS = 10;                                                           // AMOUNT OF BIRDS
 Drawable* birdFrames[BIRD_FRAME_COUNT];
 std::vector<Bird*> birds;
 
@@ -905,12 +905,14 @@ void lighting_pass(mat4 viewMatrix, mat4 projectionMatrix) {
     glUniform1i(useTextureLocation, 3);
 
     // draw particles
-    if (popParticles) {
+    if (!popParticles.empty()) {
         glDepthMask(GL_FALSE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        popParticles->draw(modelMatrixLocation, balloon);
+        for (auto* ps : popParticles) {
+            ps->draw(modelMatrixLocation, balloon);
+        }
 
         glDepthMask(GL_TRUE);
     }
@@ -1011,7 +1013,7 @@ void mainLoop() {
         // Balloon Functions
         float dt = glfwGetTime() - lastTime;
         lastTime = glfwGetTime();
-
+        
         // static vars to store key-pressed values
         static bool keyV_wasPressed = false;
         static bool keyN_wasPressed = false;
@@ -1033,31 +1035,23 @@ void mainLoop() {
         // pop ALL (N key)
         bool keyN_isPressed = (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS);
         if (keyN_isPressed && !keyN_wasPressed) {
-            // pop ALL attached balloons at once
+            // pop ALL attached balloons at once and spawn particles for each
             for (size_t i = 0; i < balloons.size(); ++i) {
                 if (!balloons[i]->isPopped() && balloons[i]->isRopeAttached()) {
                     balloons[i]->pop();
+                    popParticles.push_back(new ParticleSystem(balloons[i]->getPosition(),
+                        balloons[i]->getColor()));
                     printf("Balloon %zu POPPED!\n", i);
-                }
-            }
-            // spawn particles for the last popped balloon
-            for (int i = (int)balloons.size() - 1; i >= 0; --i) {
-                if (balloons[i]->isPopped()) {
-                    if (popParticles)
-                        delete popParticles;
-                    popParticles = new ParticleSystem(balloons[i]->getPosition(),
-                        balloons[i]->getColor());
-                    break;
                 }
             }
         }
         keyN_wasPressed = keyN_isPressed; // save state
 
-        if (popParticles) {
-            popParticles->update(dt);
-            if (!popParticles->isAlive()) {
-                delete popParticles;
-                popParticles = nullptr;
+        for (int i = (int)popParticles.size() - 1; i >= 0; --i) {
+            popParticles[i]->update(dt);
+            if (!popParticles[i]->isAlive()) {
+                delete popParticles[i];
+                popParticles.erase(popParticles.begin() + i);
             }
         }
 
@@ -1094,10 +1088,8 @@ void mainLoop() {
                 if (checkSphereSphereCollision(birdSphere, balloonSphere)) {
                     balloons[i]->pop();
                     // Spawn pop particles
-                    if (popParticles)
-                        delete popParticles;
-                    popParticles = new ParticleSystem(balloons[i]->getPosition(),
-                        balloons[i]->getColor());
+                    popParticles.push_back(new ParticleSystem(balloons[i]->getPosition(),
+                        balloons[i]->getColor()));
                     printf("Bird popped balloon %zu!\n", i);
                     break; // One pop per bird per frame
                 }

@@ -10,7 +10,7 @@ Bird::Bird(Drawable** frames, int frameCount, vec3 center, float orbitRadius,
     : m_frames(frames), m_frameCount(frameCount), m_animTime(0.0f),
     m_animSpeed(12.0f), // 12 fps wing flap
     m_center(center), m_orbitRadius(orbitRadius), m_speed(speed),
-    m_angle(startAngle), m_height(height), m_collisionRadius(1.0f),
+    m_angle(startAngle), m_height(height), m_collisionRadius(2.0f),
     m_scale(1.5f) {
     // Initialize position
     m_position = vec3(m_center.x + m_orbitRadius * cos(m_angle), m_height,

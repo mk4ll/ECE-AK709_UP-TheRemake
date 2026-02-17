@@ -36,12 +36,12 @@ public:
 
     // Configuration
     static constexpr int BALLOON_THRESHOLD = 8;
-    static constexpr float MAX_HEIGHT = 25.0f; // Reduced from 50.0f
+    static constexpr float MAX_HEIGHT = 25.0f;
     static constexpr float HOUSE_MASS = 22.0f;
 
-    static constexpr float HOUSE_WIDTH = 8.0f;
-    static constexpr float HOUSE_HEIGHT = 10.0f;
-    static constexpr float HOUSE_DEPTH = 8.0f;
+    static constexpr float HOUSE_WIDTH = 5.0f;
+    static constexpr float HOUSE_HEIGHT = 5.0f;
+    static constexpr float HOUSE_DEPTH = 5.0f;
 
     // Terrain collision
     using TerrainHeightFunc = float (*)(float x, float z);
