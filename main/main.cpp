@@ -409,10 +409,10 @@ void createContext() {
     for (int i = 0; i < NUM_CACTI; ++i) {
         float cx = cactusSpots[i][0];
         float cz = cactusSpots[i][1];
-        float cy = getTerrainHeightAt(cx, cz) + 2.0f;
+        float cy = getTerrainHeightAt(cx, cz);
         if (i == 3) {
             cx += 1.0f;
-            cy += 2.0f; // elevate the far left cactus futher
+            cy += 4.0f; // elevate the far left cactus futher
         }
         cactusPositions[i] = vec3(cx, cy, cz);
         cactusRotations[i] = (float)(rand() % 360);
